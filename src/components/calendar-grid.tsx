@@ -13,6 +13,7 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns';
+import { enUS } from 'date-fns/locale/en-US';
 import { CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
 import type { CategoryType } from '@/lib/categories';
 
@@ -76,20 +77,40 @@ export function CalendarGrid({
       <div className="flex items-center justify-between mb-4">
         <button
           onClick={handlePrev}
-          className="p-2 rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm"
+          className="rounded-lg p-2 hover:bg-surface transition-colors"
           aria-label="Previous month"
         >
-          &larr;
+          <svg
+            className="w-5 h-5"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M13 4l-6 6 6 6" />
+          </svg>
         </button>
         <h2 className="text-lg font-semibold">
-          {year}년 {month}월
+          {format(currentMonth, 'MMMM yyyy', { locale: enUS })}
         </h2>
         <button
           onClick={handleNext}
-          className="p-2 rounded-lg border border-border hover:border-accent hover:text-accent transition-colors text-sm"
+          className="rounded-lg p-2 hover:bg-surface transition-colors"
           aria-label="Next month"
         >
-          &rarr;
+          <svg
+            className="w-5 h-5"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M7 4l6 6-6 6" />
+          </svg>
         </button>
       </div>
 
@@ -120,10 +141,12 @@ export function CalendarGrid({
               onClick={() => onDateSelect(dateStr)}
               className={`
                 relative flex flex-col items-center justify-start
-                p-1 sm:p-2 min-h-[48px] sm:min-h-[56px]
-                rounded-lg transition-all
+                p-1 sm:p-2 min-h-[80px] md:min-h-[100px]
+                rounded-lg transition-colors cursor-pointer
                 ${!inMonth ? 'opacity-30' : ''}
-                ${selected ? 'ring-2 ring-accent bg-surface' : 'hover:bg-surface'}
+                ${today && !selected ? 'bg-accent/10 border-2 border-accent rounded-lg' : ''}
+                ${selected ? 'ring-2 ring-accent bg-surface' : ''}
+                ${!selected && !today ? 'hover:bg-surface/50' : ''}
               `}
             >
               {/* Date number */}
@@ -144,7 +167,7 @@ export function CalendarGrid({
                   {dots.slice(0, MAX_DOTS).map((cat) => (
                     <span
                       key={cat}
-                      className="w-1.5 h-1.5 rounded-full"
+                      className="w-2 h-2 rounded-full"
                       style={{ backgroundColor: CATEGORIES[cat].dotColor }}
                       title={CATEGORIES[cat].name}
                     />

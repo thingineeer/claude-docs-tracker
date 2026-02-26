@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/db/supabase';
 import { getCategoryForPage, type CategoryType } from '@/lib/categories';
+import { apiError, apiInternalError } from '@/lib/api-error';
 
 interface DayEntry {
   total: number;
@@ -12,20 +13,14 @@ export async function GET(request: NextRequest) {
   const monthParam = request.nextUrl.searchParams.get('month');
 
   if (!yearParam || !monthParam) {
-    return NextResponse.json(
-      { error: 'year and month parameters are required' },
-      { status: 400 },
-    );
+    return apiError('year and month parameters are required', 400);
   }
 
   const year = parseInt(yearParam, 10);
   const month = parseInt(monthParam, 10);
 
-  if (isNaN(year) || isNaN(month) || year < 2020 || year > 2099 || month < 1 || month > 12) {
-    return NextResponse.json(
-      { error: 'invalid year or month value' },
-      { status: 400 },
-    );
+  if (isNaN(year) || isNaN(month) || year < 2024 || year > 2100 || month < 1 || month > 12) {
+    return apiError('invalid year or month value', 400);
   }
 
   const monthStart = `${year}-${String(month).padStart(2, '0')}-01`;
@@ -65,9 +60,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ year, month, days });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 },
-    );
+    return apiInternalError(error);
   }
 }

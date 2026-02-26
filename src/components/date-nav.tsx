@@ -1,13 +1,32 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 
 interface DateNavProps {
   currentDate: string;
   prevDate: string;
   nextDate: string;
   isToday: boolean;
+}
+
+function formatNavDate(dateStr: string): string {
+  try {
+    const date = parseISO(dateStr);
+    return format(date, 'EEE, MMM d', { locale: enUS });
+  } catch {
+    return dateStr;
+  }
+}
+
+function formatCurrentDate(dateStr: string): string {
+  try {
+    const date = parseISO(dateStr);
+    return format(date, 'EEEE, MMMM d, yyyy', { locale: enUS });
+  } catch {
+    return dateStr;
+  }
 }
 
 export function DateNav({ currentDate, prevDate, nextDate, isToday }: DateNavProps) {
@@ -28,15 +47,17 @@ export function DateNav({ currentDate, prevDate, nextDate, isToday }: DateNavPro
           onClick={() => router.push(`/changes/${prevDate}`)}
           className="text-sm text-accent hover:underline"
         >
-          &larr; {prevDate}
+          &larr; {formatNavDate(prevDate)}
         </button>
-        <h1 className="text-2xl font-bold">{currentDate}</h1>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">{formatCurrentDate(currentDate)}</h1>
+        </div>
         {!isToday ? (
           <button
             onClick={() => router.push(`/changes/${nextDate}`)}
             className="text-sm text-accent hover:underline"
           >
-            {nextDate} &rarr;
+            {formatNavDate(nextDate)} &rarr;
           </button>
         ) : (
           <span className="text-sm text-muted">Today</span>

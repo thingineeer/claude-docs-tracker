@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runPipeline } from '@/crawler/pipeline';
+import { apiError, apiInternalError } from '@/lib/api-error';
 
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return apiError('Unauthorized', 401);
   }
 
   try {
@@ -28,9 +29,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 },
-    );
+    return apiInternalError(error);
   }
 }

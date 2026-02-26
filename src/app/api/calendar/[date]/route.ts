@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/db/supabase';
 import { getCategoryForPage, type CategoryType } from '@/lib/categories';
 import { formatChangeSummary } from '@/lib/format-change-summary';
+import { validateDateString } from '@/lib/calendar-utils';
+import { apiError, apiInternalError } from '@/lib/api-error';
 import type { ChangeType } from '@/db/types';
 
 interface ChangeItem {
@@ -20,31 +22,8 @@ export async function GET(
 ) {
   const { date } = await params;
 
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return NextResponse.json(
-      { error: 'invalid date format, expected YYYY-MM-DD' },
-      { status: 400 },
-    );
-  }
-
-  const [yearStr, monthStr, dayStr] = date.split('-');
-  const year = parseInt(yearStr, 10);
-  const month = parseInt(monthStr, 10);
-  const day = parseInt(dayStr, 10);
-
-  if (
-    isNaN(year) ||
-    isNaN(month) ||
-    isNaN(day) ||
-    month < 1 ||
-    month > 12 ||
-    day < 1 ||
-    day > 31
-  ) {
-    return NextResponse.json(
-      { error: 'invalid date value' },
-      { status: 400 },
-    );
+  if (!validateDateString(date)) {
+    return apiError('invalid date format or value, expected YYYY-MM-DD', 400);
   }
 
   try {
@@ -99,9 +78,6 @@ export async function GET(
 
     return NextResponse.json({ date, changes, grouped });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 },
-    );
+    return apiInternalError(error);
   }
 }

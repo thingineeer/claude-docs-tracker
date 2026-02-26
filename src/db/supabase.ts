@@ -11,17 +11,18 @@ function getSupabaseUrl(): string {
 
 export function getSupabase(): SupabaseClient {
   if (!_supabase) {
-    _supabase = createClient(getSupabaseUrl(), process.env.SUPABASE_ANON_KEY ?? '');
+    const anonKey = process.env.SUPABASE_ANON_KEY;
+    if (!anonKey) throw new Error('SUPABASE_ANON_KEY environment variable is required');
+    _supabase = createClient(getSupabaseUrl(), anonKey);
   }
   return _supabase;
 }
 
 export function getSupabaseAdmin(): SupabaseClient {
   if (!_supabaseAdmin) {
-    _supabaseAdmin = createClient(
-      getSupabaseUrl(),
-      process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-    );
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey) throw new Error('SUPABASE_SERVICE_ROLE_KEY environment variable is required');
+    _supabaseAdmin = createClient(getSupabaseUrl(), serviceRoleKey);
   }
   return _supabaseAdmin;
 }
