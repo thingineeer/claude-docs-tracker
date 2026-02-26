@@ -48,8 +48,9 @@
 - [x] Agent 4: API + 스케줄링 ✅ (2026-02-26)
 - [x] Agent 5: 통합 테스트 + 배포 ✅ (2026-02-26)
 - [x] GitHub 레포 생성 & push ✅ (2026-02-26)
-- [ ] Supabase 프로젝트 생성 & 마이그레이션 (가이드 제공됨)
-- [ ] 환경변수 설정 (.env.local)
+- [x] Supabase 프로젝트 생성 & 마이그레이션 ✅ (2026-02-26)
+- [x] 환경변수 설정 (.env.local + Vercel) ✅ (2026-02-26)
+- [x] 실제 변경사항 시드 데이터 투입 (16건, 2026-01-29~02-26) ✅
 - [x] Vercel 배포 완료 ✅ (2026-02-26)
 - [x] GitHub → Vercel 자동 배포 연결 ✅ (main push/merge 시 자동 프로덕션 배포)
 
@@ -78,13 +79,13 @@
 
 ## 배포 체크리스트
 
-1. [ ] Supabase 프로젝트 생성 (Seoul 리전 권장)
-2. [ ] SQL Editor에서 `supabase/migrations/001_initial_schema.sql` 실행
-3. [ ] `.env.local` 생성 후 환경변수 입력
+1. [x] Supabase 프로젝트 생성 (Seoul 리전, ref: ngleawriplmzzpfrojde)
+2. [x] SQL Editor에서 마이그레이션 실행
+3. [x] `.env.local` 생성 완료
 4. [x] Vercel 프로젝트 연결 & 배포 완료
-5. [x] GitHub 자동 배포 설정 완료 (main merge → 자동 프로덕션 배포, PR → 프리뷰 배포)
-6. [ ] Vercel 환경변수 설정 (Dashboard → Settings → Environment Variables)
-7. [ ] 수동 크롤링 트리거로 첫 데이터 수집
+5. [x] GitHub 자동 배포 설정 완료
+6. [x] Vercel 환경변수 설정 (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET)
+7. [x] 시드 데이터 투입 (16건 실제 변경사항)
 
 ## 배포 워크플로우
 
