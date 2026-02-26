@@ -13,6 +13,19 @@ interface ChangeCardProps {
   detectedAt: string;
 }
 
+function shortenUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    if (segments.length <= 2) {
+      return `${parsed.hostname}${parsed.pathname}`;
+    }
+    return `${parsed.hostname}/.../${segments[segments.length - 1]}`;
+  } catch {
+    return url;
+  }
+}
+
 const changeTypeConfig: Record<ChangeType, { label: string; color: string; icon: string }> = {
   added: { label: 'New', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200', icon: '+' },
   modified: { label: 'Modified', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200', icon: '~' },
@@ -41,8 +54,9 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-muted hover:text-accent truncate block"
+            title={url}
           >
-            {url}
+            {shortenUrl(url)}
           </a>
           {summary && <p className="text-sm text-muted mt-2">{summary}</p>}
         </div>
