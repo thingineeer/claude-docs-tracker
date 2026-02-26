@@ -43,6 +43,9 @@ export function Navbar() {
             <Link href="/changes" className="hover:text-accent transition-colors">
               History
             </Link>
+            <Link href="/calendar" className="hover:text-accent transition-colors">
+              Calendar
+            </Link>
             <Link href="/sidebar-diff" className="hover:text-accent transition-colors">
               Sidebar Diff
             </Link>
@@ -110,6 +113,9 @@ export function Navbar() {
             </Link>
             <Link href="/changes" onClick={() => setMobileOpen(false)}>
               History
+            </Link>
+            <Link href="/calendar" onClick={() => setMobileOpen(false)}>
+              Calendar
             </Link>
             <Link href="/sidebar-diff" onClick={() => setMobileOpen(false)}>
               Sidebar Diff

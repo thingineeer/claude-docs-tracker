@@ -28,62 +28,81 @@ export default async function HomePage() {
   });
 
   return (
-    <div className="space-y-8">
-      <section className="text-center py-8">
-        <h1 className="text-3xl font-bold mb-2">Claude Docs Tracker</h1>
-        <p className="text-muted text-lg">
-          {fetchError
-            ? 'Unable to connect to database. Check your environment variables.'
-            : todayReport
-              ? `${todayReport.total_changes} ${todayReport.total_changes === 1 ? 'change' : 'changes'} detected today`
-              : 'No changes detected today'}
+    <div className="space-y-12">
+      {/* Hero */}
+      <section className="text-center pt-12 pb-4">
+        <h1 className="text-4xl font-bold tracking-tight mb-3">
+          Claude Docs Tracker
+        </h1>
+        <p className="text-muted text-lg max-w-2xl mx-auto leading-relaxed">
+          Track every change to Claude&apos;s official documentation.
+          <br className="hidden sm:block" />
+          Never miss an update to{' '}
+          <span className="text-accent font-medium">platform.claude.com</span> and{' '}
+          <span className="text-accent font-medium">code.claude.com</span>.
         </p>
       </section>
 
-      {todayReport && (
-        <section className="grid grid-cols-3 gap-4">
-          <div className="rounded-lg border border-border p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{todayReport.new_pages}</div>
-            <div className="text-sm text-muted">{todayReport.new_pages === 1 ? 'New Page' : 'New Pages'}</div>
+      {/* Stats */}
+      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
+          <div className="text-3xl font-bold text-accent">138+</div>
+          <div className="text-sm text-muted mt-1">Pages Tracked</div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
+          <div className="text-3xl font-bold text-green-600">
+            {todayReport?.new_pages ?? 0}
           </div>
-          <div className="rounded-lg border border-border p-4 text-center">
-            <div className="text-2xl font-bold text-blue-600">{todayReport.modified_pages}</div>
-            <div className="text-sm text-muted">{todayReport.modified_pages === 1 ? 'Modified Page' : 'Modified Pages'}</div>
+          <div className="text-sm text-muted mt-1">New Today</div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
+          <div className="text-3xl font-bold text-blue-600">
+            {todayReport?.modified_pages ?? 0}
           </div>
-          <div className="rounded-lg border border-border p-4 text-center">
-            <div className="text-2xl font-bold text-red-600">{todayReport.removed_pages}</div>
-            <div className="text-sm text-muted">{todayReport.removed_pages === 1 ? 'Removed Page' : 'Removed Pages'}</div>
+          <div className="text-sm text-muted mt-1">Modified Today</div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
+          <div className="text-3xl font-bold text-red-600">
+            {todayReport?.removed_pages ?? 0}
           </div>
-        </section>
-      )}
+          <div className="text-sm text-muted mt-1">Removed Today</div>
+        </div>
+      </section>
 
-      {todayReport?.ai_summary && (
-        <section className="rounded-lg border border-accent/30 bg-accent/5 p-4">
-          <h2 className="text-sm font-medium text-accent mb-2">AI Summary</h2>
-          <p className="text-sm">{todayReport.ai_summary}</p>
-        </section>
-      )}
-
+      {/* Timeline */}
       <section>
-        <h2 className="text-lg font-semibold mb-3">Last 7 Days</h2>
-        <div className="rounded-lg border border-border p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Last 7 Days</h2>
+          <div className="flex items-center gap-3">
+            <Link href="/changes" className="text-sm text-accent hover:underline">
+              View history
+            </Link>
+            <Link href="/calendar" className="text-sm text-accent hover:underline">
+              Calendar
+            </Link>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface/50 p-5">
           <TimelineBar data={timelineData} />
         </div>
       </section>
 
+      {/* Recent Changes */}
       <section>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Recent Changes</h2>
           <Link href={`/changes/${today}`} className="text-sm text-accent hover:underline">
             View all
           </Link>
         </div>
-        {changes.length === 0 ? (
-          <p className="text-muted text-sm">
-            {fetchError
-              ? 'Database connection required to display changes.'
-              : 'No changes recorded yet. Run the crawler to start tracking.'}
-          </p>
+        {fetchError ? (
+          <div className="rounded-xl border border-border bg-surface/50 p-8 text-center">
+            <p className="text-muted">Unable to connect to database.</p>
+          </div>
+        ) : changes.length === 0 ? (
+          <div className="rounded-xl border border-border bg-surface/50 p-8 text-center">
+            <p className="text-muted">No changes recorded yet.</p>
+          </div>
         ) : (
           <div className="space-y-3">
             {changes.map((change) => {
