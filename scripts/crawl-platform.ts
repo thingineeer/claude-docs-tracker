@@ -46,6 +46,31 @@ interface PageData {
   crawledAt: string;
 }
 
+// ─── HTML entity decoding ────────────────────────────────────────────────────
+
+function decodeHtmlEntities(text: string): string {
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&nbsp;': ' ',
+  };
+
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replaceAll(entity, char);
+  }
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+  decoded = decoded.replace(/&#(\d+);/g, (_, dec) =>
+    String.fromCharCode(parseInt(dec, 10)),
+  );
+  return decoded;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function sleep(ms: number): Promise<void> {
@@ -156,7 +181,7 @@ async function extractPageData(page: Page, url: string): Promise<PageData | null
 
     return {
       url,
-      title: title || 'Untitled',
+      title: decodeHtmlEntities(title || 'Untitled'),
       contentText,
       sidebarLinks,
       crawledAt: new Date().toISOString(),

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
 import type { CategoryType } from '@/lib/categories';
 import { getChangeTypeIcon } from '@/lib/format-change-summary';
+import { decodeHtmlEntities } from '@/lib/decode-entities';
 import type { ChangeType } from '@/db/types';
 
 interface ChangeItem {
@@ -174,7 +175,7 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
                             rel="noopener noreferrer"
                             className="text-sm font-medium hover:text-accent transition-colors line-clamp-1"
                           >
-                            {item.title}
+                            {decodeHtmlEntities(item.title)}
                           </a>
 
                           {/* One-line summary */}
