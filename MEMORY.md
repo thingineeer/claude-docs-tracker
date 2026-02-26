@@ -68,12 +68,22 @@
   - [x] B-2: Sidebar Diff empty state 개선
   - [x] B-3: 날짜 네비게이션 개선 (date picker, 오늘 버튼)
   - [x] B-4: 검색 기능 추가 (/search, API ?q= 파라미터)
+- [x] v1.2 캘린더 기능 추가 ✅ (2026-02-26)
+  - [x] PM-1: 카테고리 분류 시스템 (6개 카테고리, getCategoryForPage)
+  - [x] PM-2: 변경사항 요약 포매터 (formatChangeSummary)
+  - [x] PM-3: 카테고리 검증 + 테스트 (17개 테스트)
+  - [x] BE-1: 캘린더 DB 쿼리 (getChangesByMonth, getChangesByDateWithPages)
+  - [x] BE-2: pages 테이블 category 컬럼 추가 + 마이그레이션
+  - [x] BE-3: 캘린더 유틸리티 + 검증 함수 (29개 테스트)
+  - [x] Designer-1: CalendarGrid, CategoryLegend, DayDetail 컴포넌트
+  - [x] Designer-2: /calendar 페이지, CalendarView, API 라우트
+  - [x] FE-4: Navbar 캘린더 링크, 홈페이지 캘린더 링크
 
 ## 빌드 상태
 
 - Lint: 0 에러
-- Build: 성공 (14 라우트 — /search 추가)
-- Tests: 33/33 통과
+- Build: 성공 (17 라우트 — /calendar, /api/calendar, /api/calendar/[date] 추가)
+- Tests: 79/79 통과
 - 크롤링 데이터: 137개 문서 초기 스냅샷 (code: 57, platform: 80)
 - 마지막 확인: 2026-02-26
 
@@ -89,6 +99,8 @@
 | 2026-02-26 | AI 요약 한국어 전용 | 영한 혼합 어색 → 한국어만 생성, 고유명사만 영어 허용 |
 | 2026-02-26 | platform.claude.com은 Playwright 필수 | CSR 앱이라 fetch로는 JS shell만 반환, Playwright로 해결 |
 | 2026-02-26 | code.claude.com은 SSR | sitemap 있고 fetch로 콘텐츠 정상 반환 |
+| 2026-02-26 | 6개 카테고리 분류 체계 | api-reference, claude-code, guides, agent-tools, getting-started, release-notes |
+| 2026-02-26 | 캘린더 도트 색상 체계 | Blue/Violet/Accent/Emerald/Amber/Pink — 다크/라이트 양쪽에서 가시성 확보 |
 
 ## 보안 주의사항
 
@@ -106,6 +118,27 @@
 5. [x] GitHub 자동 배포 설정 완료
 6. [x] Vercel 환경변수 설정 (SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET)
 7. [x] 시드 데이터 투입 (16건 실제 변경사항)
+
+## 캘린더 기능 마이그레이션
+
+배포 전 Supabase SQL Editor에서 실행 필요:
+```sql
+-- supabase/migrations/003_add_category.sql
+ALTER TABLE pages ADD COLUMN category TEXT;
+CREATE INDEX idx_pages_category ON pages(category);
+-- 기존 137개 페이지에 카테고리 자동 매핑 (domain + section 기반)
+```
+
+## 캘린더 카테고리 매핑
+
+| 카테고리 | 도메인/섹션 | 색상 |
+|----------|-------------|------|
+| api-reference | platform: api, administration | #3B82F6 (Blue) |
+| claude-code | code.claude.com 전체 (기본) | #8B5CF6 (Violet) |
+| guides | platform: build-with-claude, about-claude, prompt-engineering | #D97757 (Accent) |
+| agent-tools | agent-sdk, mcp | #10B981 (Emerald) |
+| getting-started | intro, get-started, overview, quickstart | #F59E0B (Amber) |
+| release-notes | release-notes, changelog | #EC4899 (Pink) |
 
 ## 배포 워크플로우
 
