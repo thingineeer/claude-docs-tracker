@@ -183,6 +183,58 @@ export async function getChangesByDateWithPages(date: string) {
   return data;
 }
 
+export async function getPageCount() {
+  const { count, error } = await getSupabaseAdmin()
+    .from('pages')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) throw error;
+  return count ?? 0;
+}
+
+export async function getTodayStats(today: string) {
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('change_type')
+    .eq('detected_at', today);
+
+  if (error) throw error;
+
+  const stats = { new_pages: 0, modified_pages: 0, removed_pages: 0, total: 0 };
+  for (const row of data ?? []) {
+    stats.total++;
+    if (row.change_type === 'added') stats.new_pages++;
+    else if (row.change_type === 'modified') stats.modified_pages++;
+    else if (row.change_type === 'removed') stats.removed_pages++;
+  }
+  return stats;
+}
+
+export async function getRecentChangeCounts(days = 7) {
+  const dates: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(d.toISOString().split('T')[0]);
+  }
+
+  const startDate = dates[0];
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('detected_at')
+    .gte('detected_at', startDate)
+    .order('detected_at', { ascending: true });
+
+  if (error) throw error;
+
+  const countMap: Record<string, number> = {};
+  for (const row of data ?? []) {
+    countMap[row.detected_at] = (countMap[row.detected_at] ?? 0) + 1;
+  }
+
+  return dates.map((date) => ({ date, count: countMap[date] ?? 0 }));
+}
+
 export function getCategoryFromPage(domain: string, section: string | null): string {
   if (domain === 'code.claude.com') {
     if (section === 'overview' || section === 'quickstart') return 'platform-docs';
