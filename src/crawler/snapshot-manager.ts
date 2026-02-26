@@ -4,6 +4,7 @@ import {
   insertSnapshot,
   getLatestSnapshot,
   insertChange,
+  getCategoryFromPage,
 } from '@/db/queries';
 import { getDomainFromUrl, getSectionFromUrl } from './sitemap-parser';
 import { generateTextDiff, generateSidebarDiff } from './diff-generator';
@@ -23,11 +24,14 @@ export interface ProcessResult {
 
 export async function processSnapshot(crawlResult: CrawlResult): Promise<ProcessResult> {
   try {
+    const domain = getDomainFromUrl(crawlResult.url);
+    const section = getSectionFromUrl(crawlResult.url);
     const page = await upsertPage({
       url: crawlResult.url,
-      domain: getDomainFromUrl(crawlResult.url),
-      section: getSectionFromUrl(crawlResult.url),
+      domain,
+      section,
       title: crawlResult.title,
+      category: getCategoryFromPage(domain, section),
     });
 
     const contentHash = computeHash(crawlResult.contentText);

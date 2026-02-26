@@ -6,6 +6,7 @@ export async function upsertPage(page: {
   domain: string;
   section: string | null;
   title: string;
+  category?: string | null;
 }) {
   const { data, error } = await getSupabaseAdmin()
     .from('pages')
@@ -129,4 +130,13 @@ export async function getRecentReports(days = 7) {
 
   if (error) throw error;
   return data;
+}
+
+export function getCategoryFromPage(domain: string, section: string | null): string {
+  if (domain === 'code.claude.com') return 'claude-code';
+  if (section === 'release-notes') return 'release-notes';
+  if (section === 'agent-sdk') return 'agent-sdk';
+  if (section && ['intro', 'get-started', 'quickstart'].includes(section)) return 'getting-started';
+  if (domain === 'platform.claude.com') return 'claude-api';
+  return 'general';
 }
