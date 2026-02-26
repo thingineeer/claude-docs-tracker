@@ -27,12 +27,13 @@ export function Navbar() {
   };
 
   return (
-    <nav className="border-b border-border bg-background sticky top-0 z-50">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="flex h-14 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-semibold text-lg">
+    <nav className="border-b border-border bg-background sticky top-0 z-50 overflow-hidden">
+      <div className="mx-auto max-w-6xl px-3 sm:px-4">
+        <div className="flex h-12 sm:h-14 items-center justify-between">
+          <Link href="/" className="flex items-center gap-1 sm:gap-2 font-semibold text-base sm:text-lg shrink-0">
             <span className="text-accent">{'{'}</span>
-            <span>Claude Docs Tracker</span>
+            <span className="hidden sm:inline">Claude Docs Tracker</span>
+            <span className="sm:hidden">CDT</span>
             <span className="text-accent">{'}'}</span>
           </Link>
 
@@ -63,7 +64,7 @@ export function Navbar() {
             </Link>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               className="p-2 hover:text-accent transition-colors"
               onClick={toggleTheme}
@@ -106,28 +107,30 @@ export function Navbar() {
           </div>
         </div>
 
-        {mobileOpen && (
-          <div className="md:hidden pb-4 flex flex-col gap-3 text-sm">
-            <Link href="/" onClick={() => setMobileOpen(false)}>
-              Today
-            </Link>
-            <Link href="/changes" onClick={() => setMobileOpen(false)}>
-              History
-            </Link>
-            <Link href="/calendar" onClick={() => setMobileOpen(false)}>
-              Calendar
-            </Link>
-            <Link href="/sidebar-diff" onClick={() => setMobileOpen(false)}>
-              Sidebar Diff
-            </Link>
-            <Link href="/search" onClick={() => setMobileOpen(false)}>
-              Search
-            </Link>
-            <Link href="/api/feed/rss" target="_blank" onClick={() => setMobileOpen(false)}>
-              RSS
-            </Link>
-          </div>
-        )}
+        <div
+          className={`md:hidden flex flex-col gap-1 text-sm overflow-hidden transition-all duration-200 ease-in-out ${
+            mobileOpen ? 'max-h-80 pb-4 border-t border-border pt-2' : 'max-h-0'
+          }`}
+        >
+          <Link href="/" onClick={() => setMobileOpen(false)} className="py-2 px-3 rounded-md hover:bg-surface transition-colors">
+            Today
+          </Link>
+          <Link href="/changes" onClick={() => setMobileOpen(false)} className="py-2 px-3 rounded-md hover:bg-surface transition-colors">
+            History
+          </Link>
+          <Link href="/calendar" onClick={() => setMobileOpen(false)} className="py-2 px-3 rounded-md hover:bg-surface transition-colors">
+            Calendar
+          </Link>
+          <Link href="/sidebar-diff" onClick={() => setMobileOpen(false)} className="py-2 px-3 rounded-md hover:bg-surface transition-colors">
+            Sidebar Diff
+          </Link>
+          <Link href="/search" onClick={() => setMobileOpen(false)} className="py-2 px-3 rounded-md hover:bg-surface transition-colors">
+            Search
+          </Link>
+          <Link href="/api/feed/rss" target="_blank" onClick={() => setMobileOpen(false)} className="py-2 px-3 rounded-md hover:bg-surface transition-colors">
+            RSS
+          </Link>
+        </div>
       </div>
     </nav>
   );
