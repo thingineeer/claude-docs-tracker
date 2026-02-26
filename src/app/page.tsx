@@ -27,62 +27,46 @@ export default async function HomePage() {
     fetchError = true;
   }
 
+  const totalToday = todayStats.new_pages + todayStats.modified_pages + todayStats.removed_pages;
+
   return (
-    <div className="space-y-12">
-      {/* Hero */}
-      <section className="text-center pt-12 pb-4">
-        <h1 className="text-4xl font-bold tracking-tight mb-3">
-          Claude Docs Tracker
-        </h1>
-        <p className="text-muted text-lg max-w-2xl mx-auto leading-relaxed">
-          Track every change to Claude&apos;s official documentation.
-          <br className="hidden sm:block" />
-          Never miss an update to{' '}
-          <span className="text-accent font-medium">platform.claude.com</span> and{' '}
-          <span className="text-accent font-medium">code.claude.com</span>.
-        </p>
-      </section>
+    <div className="space-y-10">
+      {/* Compact Hero + Stats combined */}
+      <section className="pt-8 pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Claude Docs Tracker
+            </h1>
+            <p className="text-muted text-sm mt-1">
+              Tracking changes across{' '}
+              <span className="text-accent font-medium">platform.claude.com</span> &{' '}
+              <span className="text-accent font-medium">code.claude.com</span>
+            </p>
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="text-center">
+              <div className="text-xl font-bold text-accent">{pageCount}</div>
+              <div className="text-xs text-muted">Pages</div>
+            </div>
+            <div className="w-px h-8 bg-border" />
+            <div className="text-center">
+              <div className={`text-xl font-bold ${totalToday > 0 ? 'text-green-600' : 'text-muted'}`}>
+                {totalToday}
+              </div>
+              <div className="text-xs text-muted">Today</div>
+            </div>
+          </div>
+        </div>
 
-      {/* Stats */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
-          <div className="text-3xl font-bold text-accent">{pageCount}</div>
-          <div className="text-sm text-muted mt-1">Pages Tracked</div>
-        </div>
-        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
-          <div className="text-3xl font-bold text-green-600">
-            {todayStats.new_pages}
-          </div>
-          <div className="text-sm text-muted mt-1">New Today</div>
-        </div>
-        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
-          <div className="text-3xl font-bold text-blue-600">
-            {todayStats.modified_pages}
-          </div>
-          <div className="text-sm text-muted mt-1">Modified Today</div>
-        </div>
-        <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
-          <div className="text-3xl font-bold text-red-600">
-            {todayStats.removed_pages}
-          </div>
-          <div className="text-sm text-muted mt-1">Removed Today</div>
-        </div>
-      </section>
-
-      {/* Timeline */}
-      <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Last 7 Days</h2>
-          <div className="flex items-center gap-3">
-            <Link href="/changes" className="text-sm text-accent hover:underline">
-              View history
-            </Link>
-            <Link href="/calendar" className="text-sm text-accent hover:underline">
-              Calendar
+        {/* Activity Dot Strip */}
+        <div className="rounded-xl border border-border bg-surface/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-muted">Last 7 Days</h2>
+            <Link href="/calendar" className="text-xs text-accent hover:underline">
+              View calendar
             </Link>
           </div>
-        </div>
-        <div className="rounded-xl border border-border bg-surface/50 p-5">
           <TimelineBar data={timelineData} />
         </div>
       </section>
@@ -101,7 +85,14 @@ export default async function HomePage() {
           </div>
         ) : changes.length === 0 ? (
           <div className="rounded-xl border border-border bg-surface/50 p-8 text-center">
-            <p className="text-muted">No changes recorded yet.</p>
+            <div className="flex flex-col items-center gap-3">
+              <svg className="w-10 h-10 text-muted/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" />
+                <path d="M9 16l2 2 4-4" />
+              </svg>
+              <p className="text-muted text-sm">No changes detected yet. The crawler runs daily.</p>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">
