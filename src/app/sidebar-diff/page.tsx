@@ -1,4 +1,14 @@
 import { SidebarTreeDiff } from '@/components/sidebar-tree-diff';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Sidebar Structure Changes',
+  description: 'Track documentation sidebar structure changes - Claude Docs Tracker',
+  openGraph: {
+    title: 'Sidebar Structure Changes - Claude Docs Tracker',
+    description: 'Track documentation sidebar structure changes',
+  },
+};
 
 export const revalidate = 3600;
 

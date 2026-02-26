@@ -3,11 +3,24 @@ import { format, subDays, addDays } from 'date-fns';
 import { getChangesByDate, getDailyReport } from '@/db/queries';
 import { ChangeCard } from '@/components/change-card';
 import type { ChangeType } from '@/db/types';
+import type { Metadata } from 'next';
 
 export const revalidate = 86400;
 
 interface PageProps {
   params: Promise<{ date: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { date } = await params;
+  return {
+    title: `Changes on ${date}`,
+    description: `Documentation changes detected on ${date} - Claude Docs Tracker`,
+    openGraph: {
+      title: `Changes on ${date} - Claude Docs Tracker`,
+      description: `Documentation changes detected on ${date}`,
+    },
+  };
 }
 
 export default async function ChangesDatePage({ params }: PageProps) {
