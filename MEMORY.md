@@ -9,7 +9,7 @@
 - **설명**: Claude 공식 문서의 일일 변경사항을 추적하는 웹 서비스
 - **소유자**: thingineeer
 - **GitHub**: https://github.com/thingineeer/claude-docs-tracker
-- **상태**: v1.3 전면 리디자인 완료
+- **상태**: v2.0 UX Overhaul 완료
 - **Production URL**: https://claude-docs-tracker.vercel.app
 - **라이선스**: MIT
 - **공개 여부**: public 오픈소스 (처음부터)
@@ -41,10 +41,10 @@
 - `/sidebar-diff` — 삭제, 빈 페이지였음
 
 ### 네비게이션
-- 네비바: **Home / Calendar / Search** (3개만)
-- 활성 페이지 accent 하이라이트
-- 모바일: sm(640px) 이하 햄버거 메뉴, 로고 `{ CDT }`
-- 푸터: GitHub, RSS, Calendar, Search 보조 링크
+- 헤더: sparkle 아이콘 + "Claude Docs Tracker" (pill-shaped active nav)
+- sticky top-0 backdrop-blur-md, 모바일 md:hidden 햄버거 → 슬라이드 드로어
+- 푸터: 좌측 "Claude Docs Tracker" + GitHub/RSS 아이콘, 우측 "MIT License · Next.js"
+- 글로벌 Cmd+K → /search 포커스 (command-k.tsx)
 
 ### API 라우트
 - `/api/calendar` — 월별 캘린더 데이터
@@ -67,7 +67,7 @@
 
 - 아이콘: `src/lib/category-icons.tsx` (커스텀 SVG, 이모지 없음)
 - 분류 로직: `src/lib/categories.ts` (`getCategoryForPage`)
-- DB 동기화: `src/db/queries.ts` (`getCategoryFromPage`)
+- DB 동기화: `src/db/queries.ts` (`getCategoryFromPage → categories.ts의 getCategoryForPage re-export`)
 
 ## 홈페이지 데이터 소스 (v1.3)
 
@@ -76,12 +76,32 @@
 - 7일 타임라인: `getRecentChangeCounts()` → changes 테이블 직접 집계
 - (daily_reports 테이블 미사용 — 데이터 정합성 위해 changes에서 직접)
 
-## Activity Dot Strip (v1.3)
+## UX Overhaul (v2.0 — 2026-02-26)
 
-- 바 차트 → 원형 점 시각화 교체
-- 점 크기: 24px(0) ~ 44px(10+), 투명도 스케일
-- 오늘 날짜: ring 하이라이트
-- 클릭 → `/changes/YYYY-MM-DD` 이동
+### 디자인 시스템
+- Warm palette: light #faf9f7, dark #1a1816 (순수 흰/검 → 따뜻한 톤)
+- 신규 토큰: --card-shadow, --hover-bg (@theme inline 등록)
+- globals.css: focus-visible ring, .card-hover, .skeleton shimmer 유틸리티 추가
+
+### 홈페이지
+- 스탯 3개 카드 (SVG 아이콘 + 값), dot strip 카드 래핑
+- change-card: 카테고리 칩 + 상대 시간 + softer badge + ghost Show Diff
+- dot strip: w-3 h-3 크기, hover 툴팁, 오늘 pulse 애니메이션
+
+### 캘린더
+- 영어 locale 강제 (enUS), 셀 min-h 증가, today accent border
+- 데스크톱: grid-cols-[1fr_360px] 사이드바 레이아웃 (day detail sticky)
+- "Go to today" 버튼, day-detail 미니 카드 + "View full details →" 링크
+
+### 검색 & 변경 상세
+- 검색: 인라인 입력 (Enter 검색), Cmd+K 뱃지, 키워드 하이라이팅 (XSS-safe)
+- suggestion chips (empty state), 결과 카운트
+- changes/[date]: 섹션 아이콘 (green/blue/red/purple SVG), 영어 날짜 네비
+
+### 신규 파일
+- `src/components/header.tsx` — 리디자인된 헤더
+- `src/components/mobile-nav.tsx` — 모바일 슬라이드 드로어
+- `src/components/command-k.tsx` — 글로벌 Cmd+K 단축키
 
 ## DB 상태
 
@@ -94,6 +114,28 @@
 - TypeScript: 0 에러
 - Tests: 79/79 통과 (7 suites)
 - 마지막 확인: 2026-02-26
+
+## QA 수정 이력 (v1.3.1 — 2026-02-26)
+
+### 완료된 수정
+- 한국어/영어 혼재 3곳 통일 (format-change-summary, day-detail, calendar-grid)
+- snapshot-manager: sidebar만 변경 시 중복 change 레코드 방지
+- getCategoryFromPage 중복 함수 → categories.ts의 getCategoryForPage로 통합
+- calendar/[date] API: validateDateString() 적용 (2월 30일 등 방어)
+- 연도 범위 불일치 통일 (2024-2100)
+- calendar-view race condition 수정 (빠른 월 전환 시 stale data 방지)
+- supabase.ts: 환경변수 빈 문자열 방어
+- changes API: 검색 쿼리 200자 제한
+- search/page: 검색 결과 없을 때 올바른 쿼리 표시
+- change-card: Show Diff 버튼 접근성(aria-expanded, aria-label)
+- DiffView: XSS 방어 (HTML sanitizer 추가)
+- 검색 LIKE 특수문자 이스케이프
+- 크롤러 전체 타임아웃 추가
+- API 에러 응답 형식 통일
+- 검색 버튼 빈 입력 비활성화
+- RSS/JSON 피드 CORS 헤더 추가
+- HTML 엔티티 디코딩 중복 제거
+- 크롤러 상수 config.ts로 중앙화
 
 ## 보안 주의사항
 
