@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { format, subDays, addDays } from 'date-fns';
 import { getChangesByDate } from '@/db/queries';
 import { ChangeCard } from '@/components/change-card';
@@ -45,6 +46,12 @@ export default async function ChangesDatePage({ params }: PageProps) {
 
   return (
     <div className="space-y-8">
+      <div className="flex items-center gap-2 text-sm text-muted mb-4">
+        <Link href="/calendar" className="hover:text-accent transition-colors">Calendar</Link>
+        <span>/</span>
+        <span>{date}</span>
+      </div>
+
       <DateNav
         currentDate={date}
         prevDate={prevDate}
@@ -53,9 +60,26 @@ export default async function ChangesDatePage({ params }: PageProps) {
       />
 
       {fetchError ? (
-        <p className="text-muted text-sm">Database connection required.</p>
+        <div className="rounded-xl border border-border bg-surface/50 p-8 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <svg className="w-10 h-10 text-muted/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <p className="text-muted text-sm">Database connection required.</p>
+          </div>
+        </div>
       ) : changes.length === 0 ? (
-        <p className="text-muted text-sm">No changes detected on this date.</p>
+        <div className="rounded-xl border border-border bg-surface/50 p-8 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <svg className="w-10 h-10 text-muted/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+              <path d="M9 16l2 2 4-4" />
+            </svg>
+            <p className="text-muted text-sm">No changes detected on this date.</p>
+          </div>
+        </div>
       ) : (
         <>
           {newPages.length > 0 && (
