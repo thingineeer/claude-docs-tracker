@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/db/supabase';
-import { getCategoryForPage, type CategoryType } from '@/lib/categories';
+import { getCategoryForPage, CATEGORIES, type CategoryType } from '@/lib/categories';
 import { formatChangeSummary } from '@/lib/format-change-summary';
 import type { ChangeType } from '@/db/types';
 
@@ -71,11 +71,13 @@ export async function GET(
 
       if (!page) continue;
 
-      const category = getCategoryForPage(page);
+      const category = getCategoryForPage(page.domain, page.section);
+      const categoryConfig = CATEGORIES[category];
       const formattedSummary = formatChangeSummary({
-        change_type: row.change_type as ChangeType,
-        diff_summary: row.diff_summary,
-        pages: page,
+        title: page.title,
+        changeType: row.change_type as ChangeType,
+        diffSummary: row.diff_summary,
+        categoryEmoji: categoryConfig.emoji,
       });
 
       const item: ChangeItem = {

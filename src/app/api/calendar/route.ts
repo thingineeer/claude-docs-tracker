@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   try {
     const { data, error } = await getSupabaseAdmin()
       .from('changes')
-      .select('detected_at, pages(domain, section, url)')
+      .select('detected_at, pages(domain, section)')
       .gte('detected_at', monthStart)
       .lt('detected_at', monthEnd)
       .order('detected_at', { ascending: true });
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     for (const row of data ?? []) {
       const date = row.detected_at;
-      const page = row.pages as unknown as { domain: string; section: string | null; url: string } | null;
+      const page = row.pages as unknown as { domain: string; section: string | null } | null;
 
       if (!date || !page) continue;
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
       days[date].total += 1;
 
-      const category = getCategoryForPage(page);
+      const category = getCategoryForPage(page.domain, page.section);
       days[date].categories[category] = (days[date].categories[category] ?? 0) + 1;
     }
 

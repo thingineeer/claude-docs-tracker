@@ -3,21 +3,20 @@
 import { useCallback, useEffect, useMemo, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { format } from 'date-fns';
-import { CalendarGrid, type CalendarDayData } from './calendar-grid';
+import { CalendarGrid } from './calendar-grid';
 import { CategoryLegend } from './category-legend';
-import { DayDetail, type DayChange } from './day-detail';
-import { ALL_CATEGORIES, type CategoryType } from '@/lib/categories';
+import { DayDetail } from './day-detail';
+import { CATEGORY_ORDER, type CategoryType } from '@/lib/categories';
+
+interface CalendarDayData {
+  total: number;
+  categories: Record<string, number>;
+}
 
 interface CalendarApiResponse {
   year: number;
   month: number;
   days: Record<string, CalendarDayData>;
-}
-
-interface DayDetailApiResponse {
-  date: string;
-  changes: DayChange[];
-  grouped: Partial<Record<CategoryType, DayChange[]>>;
 }
 
 function CalendarViewInner() {
@@ -39,13 +38,11 @@ function CalendarViewInner() {
   }, [monthParam]);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(today);
-  const [activeCategories, setActiveCategories] = useState<Set<CategoryType>>(
-    () => new Set(ALL_CATEGORIES),
+  const [activeCategories, setActiveCategories] = useState<Set<string>>(
+    () => new Set(CATEGORY_ORDER as string[]),
   );
   const [calendarData, setCalendarData] = useState<Record<string, CalendarDayData>>({});
-  const [dayDetailData, setDayDetailData] = useState<DayDetailApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [detailLoading, setDetailLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -81,72 +78,19 @@ function CalendarViewInner() {
     };
   }, [currentYear, currentMonth]);
 
-  useEffect(() => {
-    if (!selectedDate) {
-      setDayDetailData(null);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function fetchDayDetail() {
-      setDetailLoading(true);
-      try {
-        const res = await fetch(`/api/calendar/${selectedDate}`);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        const data: DayDetailApiResponse = await res.json();
-        if (!cancelled) {
-          setDayDetailData(data);
-        }
-      } catch {
-        if (!cancelled) {
-          setDayDetailData(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setDetailLoading(false);
-        }
-      }
-    }
-
-    fetchDayDetail();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedDate]);
-
-  const navigateMonth = useCallback(
-    (direction: 'prev' | 'next') => {
-      let newYear = currentYear;
-      let newMonth = currentMonth;
-
-      if (direction === 'prev') {
-        newMonth -= 1;
-        if (newMonth < 1) {
-          newMonth = 12;
-          newYear -= 1;
-        }
-      } else {
-        newMonth += 1;
-        if (newMonth > 12) {
-          newMonth = 1;
-          newYear += 1;
-        }
-      }
-
-      const monthStr = `${newYear}-${String(newMonth).padStart(2, '0')}`;
+  const handleMonthChange = useCallback(
+    (year: number, month: number) => {
+      const monthStr = `${year}-${String(month).padStart(2, '0')}`;
       router.push(`/calendar?month=${monthStr}`);
     },
-    [currentYear, currentMonth, router],
+    [router],
   );
 
   const handleSelectDate = useCallback((date: string) => {
     setSelectedDate(date);
   }, []);
 
-  const handleToggleCategory = useCallback((category: CategoryType) => {
+  const handleToggleCategory = useCallback((category: string) => {
     setActiveCategories((prev) => {
       const next = new Set(prev);
       if (next.has(category)) {
@@ -157,8 +101,6 @@ function CalendarViewInner() {
       return next;
     });
   }, []);
-
-  const monthLabel = `${currentYear}. ${String(currentMonth).padStart(2, '0')}`;
 
   if (error) {
     return (
@@ -176,24 +118,6 @@ function CalendarViewInner() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => navigateMonth('prev')}
-          className="px-3 py-1.5 rounded border border-border hover:border-accent hover:text-accent transition-colors text-sm"
-          aria-label="Previous month"
-        >
-          &larr; Prev
-        </button>
-        <h2 className="text-lg font-semibold tabular-nums">{monthLabel}</h2>
-        <button
-          onClick={() => navigateMonth('next')}
-          className="px-3 py-1.5 rounded border border-border hover:border-accent hover:text-accent transition-colors text-sm"
-          aria-label="Next month"
-        >
-          Next &rarr;
-        </button>
-      </div>
-
       {loading ? (
         <div className="grid grid-cols-7 gap-1">
           {Array.from({ length: 35 }, (_, i) => (
@@ -207,25 +131,23 @@ function CalendarViewInner() {
         <CalendarGrid
           year={currentYear}
           month={currentMonth}
-          days={calendarData}
+          data={calendarData}
           selectedDate={selectedDate}
+          onDateSelect={handleSelectDate}
+          onMonthChange={handleMonthChange}
           activeCategories={activeCategories}
-          onSelectDate={handleSelectDate}
         />
       )}
 
       <CategoryLegend
         activeCategories={activeCategories}
-        onToggleCategory={handleToggleCategory}
+        onToggle={handleToggleCategory}
       />
 
       {selectedDate && (
         <DayDetail
           date={selectedDate}
-          changes={dayDetailData?.changes ?? []}
-          grouped={dayDetailData?.grouped ?? {}}
           activeCategories={activeCategories}
-          loading={detailLoading}
         />
       )}
     </div>
