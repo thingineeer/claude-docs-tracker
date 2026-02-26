@@ -9,7 +9,8 @@
 - **설명**: Claude 공식 문서의 일일 변경사항을 추적하는 웹 서비스
 - **소유자**: thingineeer
 - **GitHub**: https://github.com/thingineeer/claude-docs-tracker
-- **상태**: MVP 개발 완료, GitHub 레포 생성 완료
+- **상태**: MVP 배포 완료
+- **Production URL**: https://claude-docs-tracker.vercel.app
 - **라이선스**: MIT
 - **공개 여부**: public 오픈소스 (처음부터)
 
@@ -49,7 +50,8 @@
 - [x] GitHub 레포 생성 & push ✅ (2026-02-26)
 - [ ] Supabase 프로젝트 생성 & 마이그레이션 (가이드 제공됨)
 - [ ] 환경변수 설정 (.env.local)
-- [ ] Vercel 배포 (가이드 제공됨)
+- [x] Vercel 배포 완료 ✅ (2026-02-26)
+- [x] GitHub → Vercel 자동 배포 연결 ✅ (main push/merge 시 자동 프로덕션 배포)
 
 ## 빌드 상태
 
@@ -79,10 +81,17 @@
 1. [ ] Supabase 프로젝트 생성 (Seoul 리전 권장)
 2. [ ] SQL Editor에서 `supabase/migrations/001_initial_schema.sql` 실행
 3. [ ] `.env.local` 생성 후 환경변수 입력
-4. [ ] Vercel에서 프로젝트 임포트 & 환경변수 설정
-5. [ ] 배포 후 `https://your-app.vercel.app/` 접속 확인
-6. [ ] 수동 크롤링 트리거로 첫 데이터 수집
-7. [ ] CRON_SECRET이 Vercel 환경변수에 설정되었는지 확인
+4. [x] Vercel 프로젝트 연결 & 배포 완료
+5. [x] GitHub 자동 배포 설정 완료 (main merge → 자동 프로덕션 배포, PR → 프리뷰 배포)
+6. [ ] Vercel 환경변수 설정 (Dashboard → Settings → Environment Variables)
+7. [ ] 수동 크롤링 트리거로 첫 데이터 수집
+
+## 배포 워크플로우
+
+```
+feat/* 브랜치 작업 → PR 생성 → 프리뷰 배포 자동 생성
+                   → main 머지 → 프로덕션 자동 배포
+```
 
 ## 참고 링크
 
