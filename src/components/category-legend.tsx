@@ -1,6 +1,7 @@
 'use client';
 
 import { CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
+import { CategoryIcon } from '@/lib/category-icons';
 
 interface CategoryLegendProps {
   activeCategories: Set<string>;
@@ -31,6 +32,7 @@ export function CategoryLegend({ activeCategories, onToggle }: CategoryLegendPro
               className="w-2 h-2 rounded-full shrink-0"
               style={{ backgroundColor: config.dotColor }}
             />
+            <CategoryIcon category={cat} className="w-3.5 h-3.5" />
             <span>{config.name}</span>
           </button>
         );

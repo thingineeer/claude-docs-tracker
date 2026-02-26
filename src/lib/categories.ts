@@ -1,24 +1,22 @@
 /**
  * Category classification system for calendar view.
  *
- * Maps each documentation page to one of 6 categories based on
+ * Maps each documentation page to one of 4 categories based on
  * its domain and section. Used for color-coded calendar dots,
  * filtering, and visual grouping across the UI.
  */
 
 export type CategoryType =
-  | 'api-reference'
-  | 'claude-code'
-  | 'guides'
+  | 'platform-docs'
   | 'agent-tools'
-  | 'getting-started'
+  | 'claude-code'
   | 'release-notes';
 
 export interface CategoryConfig {
   /** Display name shown in UI */
   name: string;
-  /** Emoji icon for visual identification */
-  emoji: string;
+  /** Icon key for SVG icon lookup */
+  icon: string;
   /** Primary color hex (for badges, labels) */
   color: string;
   /** Dot color hex (for calendar view, slightly muted) */
@@ -28,44 +26,30 @@ export interface CategoryConfig {
 }
 
 export const CATEGORIES: Record<CategoryType, CategoryConfig> = {
-  'api-reference': {
-    name: 'API Reference',
-    emoji: '\u{1F4E1}',
+  'platform-docs': {
+    name: 'Platform Docs',
+    icon: 'platform-docs',
     color: '#3B82F6',
     dotColor: '#60A5FA',
-    description: 'API endpoints, SDKs, authentication, and developer platform docs',
-  },
-  'claude-code': {
-    name: 'Claude Code',
-    emoji: '\u{1F4BB}',
-    color: '#8B5CF6',
-    dotColor: '#A78BFA',
-    description: 'CLI tool, IDE plugins, hooks, and CI/CD integration',
-  },
-  'guides': {
-    name: 'Guides & Features',
-    emoji: '\u{1F4D6}',
-    color: '#D97757',
-    dotColor: '#E5956F',
-    description: 'Building with Claude, prompt engineering, and feature guides',
+    description: 'API reference, guides, getting started, and platform documentation',
   },
   'agent-tools': {
     name: 'Agents & Tools',
-    emoji: '\u{1F916}',
+    icon: 'agent-tools',
     color: '#10B981',
     dotColor: '#34D399',
     description: 'Agent SDK, MCP, tool use, and agent capabilities',
   },
-  'getting-started': {
-    name: 'Getting Started',
-    emoji: '\u{1F680}',
-    color: '#F59E0B',
-    dotColor: '#FBBF24',
-    description: 'Introduction, quickstart, setup, and overview pages',
+  'claude-code': {
+    name: 'Claude Code',
+    icon: 'claude-code',
+    color: '#8B5CF6',
+    dotColor: '#A78BFA',
+    description: 'CLI tool, IDE plugins, hooks, and CI/CD integration',
   },
   'release-notes': {
     name: 'Release Notes',
-    emoji: '\u{1F4CB}',
+    icon: 'release-notes',
     color: '#EC4899',
     dotColor: '#F472B6',
     description: 'Version updates, changelogs, and deprecation notices',
@@ -79,40 +63,40 @@ export const CATEGORIES: Record<CategoryType, CategoryConfig> = {
  * `platform.claude.com/docs/en/{section}/...`
  */
 const PLATFORM_SECTION_MAP: Record<string, CategoryType> = {
-  // Getting Started
-  'intro': 'getting-started',
-  'get-started': 'getting-started',
+  // Getting Started -> Platform Docs
+  'intro': 'platform-docs',
+  'get-started': 'platform-docs',
 
-  // About Claude (models, pricing, etc.) -> Guides
-  'about-claude': 'guides',
+  // About Claude (models, pricing, etc.) -> Platform Docs
+  'about-claude': 'platform-docs',
 
-  // Build with Claude -> Guides
-  'build-with-claude': 'guides',
+  // Build with Claude -> Platform Docs
+  'build-with-claude': 'platform-docs',
 
-  // Prompt Engineering -> Guides
-  'prompt-engineering': 'guides',
+  // Prompt Engineering -> Platform Docs
+  'prompt-engineering': 'platform-docs',
 
-  // API Reference
-  'api': 'api-reference',
+  // API Reference -> Platform Docs
+  'api': 'platform-docs',
 
   // Agent SDK & Tools
   'agent-sdk': 'agent-tools',
   'agents-and-tools': 'agent-tools',
 
-  // Administration -> API Reference (platform management)
-  'administration': 'api-reference',
+  // Administration -> Platform Docs (platform management)
+  'administration': 'platform-docs',
 
-  // Test & Evaluate -> Guides
-  'test-and-evaluate': 'guides',
+  // Test & Evaluate -> Platform Docs
+  'test-and-evaluate': 'platform-docs',
 
   // Release Notes
   'release-notes': 'release-notes',
 
-  // Resources -> Guides
-  'resources': 'guides',
+  // Resources -> Platform Docs
+  'resources': 'platform-docs',
 
   // Home (Documentation main page)
-  'home': 'getting-started',
+  'home': 'platform-docs',
 };
 
 /**
@@ -122,9 +106,9 @@ const PLATFORM_SECTION_MAP: Record<string, CategoryType> = {
  * itself becomes the section value.
  */
 const CODE_SECTION_MAP: Record<string, CategoryType> = {
-  // Getting started
-  'overview': 'getting-started',
-  'quickstart': 'getting-started',
+  // Getting started -> Platform Docs
+  'overview': 'platform-docs',
+  'quickstart': 'platform-docs',
 
   // MCP-related -> Agent & Tools
   'mcp': 'agent-tools',
@@ -143,11 +127,11 @@ const CODE_SECTION_MAP: Record<string, CategoryType> = {
  *
  * @example
  * ```ts
- * getCategoryForPage('platform.claude.com', 'api')           // 'api-reference'
+ * getCategoryForPage('platform.claude.com', 'api')           // 'platform-docs'
  * getCategoryForPage('code.claude.com', 'hooks')             // 'claude-code'
  * getCategoryForPage('platform.claude.com', 'agent-sdk')     // 'agent-tools'
  * getCategoryForPage('platform.claude.com', 'release-notes') // 'release-notes'
- * getCategoryForPage('platform.claude.com', null)            // 'getting-started'
+ * getCategoryForPage('platform.claude.com', null)            // 'platform-docs'
  * ```
  */
 export function getCategoryForPage(
@@ -168,11 +152,7 @@ export function getCategoryForPage(
   }
 
   // Fallback: no section or unknown section on platform
-  if (!section) {
-    return 'getting-started';
-  }
-
-  return 'guides';
+  return 'platform-docs';
 }
 
 /**
@@ -189,9 +169,7 @@ export function getCategoryConfig(
 
 /** List all category types in display order. */
 export const CATEGORY_ORDER: CategoryType[] = [
-  'getting-started',
-  'guides',
-  'api-reference',
+  'platform-docs',
   'agent-tools',
   'claude-code',
   'release-notes',

@@ -110,13 +110,13 @@ export interface CalendarDayData {
  * @example
  * ```ts
  * const result = aggregateByDateAndCategory([
- *   { detected_at: '2026-02-01', category: 'api-reference' },
- *   { detected_at: '2026-02-01', category: 'guides' },
- *   { detected_at: '2026-02-02', category: 'api-reference' },
+ *   { detected_at: '2026-02-01', category: 'platform-docs' },
+ *   { detected_at: '2026-02-01', category: 'claude-code' },
+ *   { detected_at: '2026-02-02', category: 'platform-docs' },
  * ]);
  * // {
- * //   '2026-02-01': { total: 2, categories: { 'api-reference': 1, 'guides': 1 } },
- * //   '2026-02-02': { total: 1, categories: { 'api-reference': 1 } },
+ * //   '2026-02-01': { total: 2, categories: { 'platform-docs': 1, 'claude-code': 1 } },
+ * //   '2026-02-02': { total: 1, categories: { 'platform-docs': 1 } },
  * // }
  * ```
  */

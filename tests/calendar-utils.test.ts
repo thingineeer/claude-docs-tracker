@@ -162,41 +162,41 @@ describe('calendar-utils', () => {
 
     it('aggregates a single change', () => {
       const result = aggregateByDateAndCategory([
-        { detected_at: '2026-02-01', category: 'api-reference' },
+        { detected_at: '2026-02-01', category: 'platform-docs' },
       ]);
       expect(result).toEqual({
         '2026-02-01': {
           total: 1,
-          categories: { 'api-reference': 1 },
+          categories: { 'platform-docs': 1 },
         },
       });
     });
 
     it('aggregates multiple changes on the same day', () => {
       const result = aggregateByDateAndCategory([
-        { detected_at: '2026-02-01', category: 'api-reference' },
-        { detected_at: '2026-02-01', category: 'guides' },
-        { detected_at: '2026-02-01', category: 'api-reference' },
+        { detected_at: '2026-02-01', category: 'platform-docs' },
+        { detected_at: '2026-02-01', category: 'claude-code' },
+        { detected_at: '2026-02-01', category: 'platform-docs' },
       ]);
       expect(result).toEqual({
         '2026-02-01': {
           total: 3,
-          categories: { 'api-reference': 2, 'guides': 1 },
+          categories: { 'platform-docs': 2, 'claude-code': 1 },
         },
       });
     });
 
     it('aggregates changes across multiple days', () => {
       const result = aggregateByDateAndCategory([
-        { detected_at: '2026-02-01', category: 'api-reference' },
-        { detected_at: '2026-02-01', category: 'guides' },
+        { detected_at: '2026-02-01', category: 'platform-docs' },
+        { detected_at: '2026-02-01', category: 'agent-tools' },
         { detected_at: '2026-02-02', category: 'claude-code' },
         { detected_at: '2026-02-03', category: 'release-notes' },
         { detected_at: '2026-02-03', category: 'release-notes' },
       ]);
       expect(result['2026-02-01']).toEqual({
         total: 2,
-        categories: { 'api-reference': 1, 'guides': 1 },
+        categories: { 'platform-docs': 1, 'agent-tools': 1 },
       });
       expect(result['2026-02-02']).toEqual({
         total: 1,
@@ -208,13 +208,11 @@ describe('calendar-utils', () => {
       });
     });
 
-    it('handles all six category types', () => {
+    it('handles all four category types', () => {
       const allCategories = [
-        'api-reference',
-        'claude-code',
-        'guides',
+        'platform-docs',
         'agent-tools',
-        'getting-started',
+        'claude-code',
         'release-notes',
       ];
       const changes = allCategories.map((category) => ({
@@ -222,7 +220,7 @@ describe('calendar-utils', () => {
         category,
       }));
       const result = aggregateByDateAndCategory(changes);
-      expect(result['2026-02-15'].total).toBe(6);
+      expect(result['2026-02-15'].total).toBe(4);
       for (const cat of allCategories) {
         expect(result['2026-02-15'].categories[cat]).toBe(1);
       }

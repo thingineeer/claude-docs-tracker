@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
 import type { CategoryType } from '@/lib/categories';
+import { CategoryIcon } from '@/lib/category-icons';
 import { getChangeTypeIcon } from '@/lib/format-change-summary';
 import type { ChangeType } from '@/db/types';
 
@@ -142,7 +143,7 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
               <div key={cat}>
                 {/* Category group header */}
                 <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                  <span>{config.emoji}</span>
+                  <CategoryIcon category={cat} className="w-4 h-4" />
                   <span>{config.name}</span>
                   <span className="text-muted font-normal">
                     ({items.length} {items.length === 1 ? 'change' : 'changes'})

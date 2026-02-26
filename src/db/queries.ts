@@ -185,16 +185,13 @@ export async function getChangesByDateWithPages(date: string) {
 
 export function getCategoryFromPage(domain: string, section: string | null): string {
   if (domain === 'code.claude.com') {
-    if (section === 'overview' || section === 'quickstart') return 'getting-started';
+    if (section === 'overview' || section === 'quickstart') return 'platform-docs';
     if (section === 'mcp') return 'agent-tools';
     if (section === 'changelog') return 'release-notes';
     return 'claude-code';
   }
   if (section === 'release-notes') return 'release-notes';
   if (section && ['agent-sdk', 'agents-and-tools'].includes(section)) return 'agent-tools';
-  if (section && ['intro', 'get-started', 'home'].includes(section)) return 'getting-started';
-  if (section && ['api', 'administration'].includes(section)) return 'api-reference';
-  if (section && ['build-with-claude', 'about-claude', 'prompt-engineering', 'resources', 'test-and-evaluate'].includes(section)) return 'guides';
-  if (!section) return 'getting-started';
-  return 'guides';
+  // Everything else on platform is now 'platform-docs'
+  return 'platform-docs';
 }

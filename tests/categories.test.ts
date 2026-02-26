@@ -18,39 +18,39 @@ describe('categories', () => {
     });
 
     it('overrides code.claude.com for special sections', () => {
-      expect(getCategoryForPage('code.claude.com', 'overview')).toBe('getting-started');
-      expect(getCategoryForPage('code.claude.com', 'quickstart')).toBe('getting-started');
+      expect(getCategoryForPage('code.claude.com', 'overview')).toBe('platform-docs');
+      expect(getCategoryForPage('code.claude.com', 'quickstart')).toBe('platform-docs');
       expect(getCategoryForPage('code.claude.com', 'mcp')).toBe('agent-tools');
       expect(getCategoryForPage('code.claude.com', 'changelog')).toBe('release-notes');
     });
 
     it('classifies platform.claude.com sections correctly', () => {
-      expect(getCategoryForPage('platform.claude.com', 'api')).toBe('api-reference');
-      expect(getCategoryForPage('platform.claude.com', 'administration')).toBe('api-reference');
-      expect(getCategoryForPage('platform.claude.com', 'build-with-claude')).toBe('guides');
-      expect(getCategoryForPage('platform.claude.com', 'about-claude')).toBe('guides');
-      expect(getCategoryForPage('platform.claude.com', 'prompt-engineering')).toBe('guides');
+      expect(getCategoryForPage('platform.claude.com', 'api')).toBe('platform-docs');
+      expect(getCategoryForPage('platform.claude.com', 'administration')).toBe('platform-docs');
+      expect(getCategoryForPage('platform.claude.com', 'build-with-claude')).toBe('platform-docs');
+      expect(getCategoryForPage('platform.claude.com', 'about-claude')).toBe('platform-docs');
+      expect(getCategoryForPage('platform.claude.com', 'prompt-engineering')).toBe('platform-docs');
       expect(getCategoryForPage('platform.claude.com', 'agent-sdk')).toBe('agent-tools');
       expect(getCategoryForPage('platform.claude.com', 'agents-and-tools')).toBe('agent-tools');
-      expect(getCategoryForPage('platform.claude.com', 'test-and-evaluate')).toBe('guides');
+      expect(getCategoryForPage('platform.claude.com', 'test-and-evaluate')).toBe('platform-docs');
       expect(getCategoryForPage('platform.claude.com', 'release-notes')).toBe('release-notes');
-      expect(getCategoryForPage('platform.claude.com', 'intro')).toBe('getting-started');
-      expect(getCategoryForPage('platform.claude.com', 'get-started')).toBe('getting-started');
-      expect(getCategoryForPage('platform.claude.com', 'home')).toBe('getting-started');
+      expect(getCategoryForPage('platform.claude.com', 'intro')).toBe('platform-docs');
+      expect(getCategoryForPage('platform.claude.com', 'get-started')).toBe('platform-docs');
+      expect(getCategoryForPage('platform.claude.com', 'home')).toBe('platform-docs');
     });
 
     it('handles null section', () => {
-      expect(getCategoryForPage('platform.claude.com', null)).toBe('getting-started');
+      expect(getCategoryForPage('platform.claude.com', null)).toBe('platform-docs');
       expect(getCategoryForPage('code.claude.com', null)).toBe('claude-code');
     });
 
-    it('handles unknown sections as guides fallback', () => {
-      expect(getCategoryForPage('platform.claude.com', 'unknown-section')).toBe('guides');
+    it('handles unknown sections as platform-docs fallback', () => {
+      expect(getCategoryForPage('platform.claude.com', 'unknown-section')).toBe('platform-docs');
     });
 
     it('handles unknown domains', () => {
-      expect(getCategoryForPage('support.claude.com', 'some-section')).toBe('guides');
-      expect(getCategoryForPage('support.claude.com', null)).toBe('getting-started');
+      expect(getCategoryForPage('support.claude.com', 'some-section')).toBe('platform-docs');
+      expect(getCategoryForPage('support.claude.com', null)).toBe('platform-docs');
     });
   });
 
@@ -81,14 +81,14 @@ describe('categories', () => {
   });
 
   describe('CATEGORIES constant', () => {
-    it('has exactly 6 categories', () => {
-      expect(Object.keys(CATEGORIES)).toHaveLength(6);
+    it('has exactly 4 categories', () => {
+      expect(Object.keys(CATEGORIES)).toHaveLength(4);
     });
 
     it('every category has required fields', () => {
       for (const config of Object.values(CATEGORIES)) {
         expect(config.name).toBeTruthy();
-        expect(config.emoji).toBeTruthy();
+        expect(config.icon).toBeTruthy();
         expect(config.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
         expect(config.dotColor).toMatch(/^#[0-9A-Fa-f]{6}$/);
         expect(config.description).toBeTruthy();
@@ -112,7 +112,7 @@ describe('categories', () => {
     it('returns correct config for a page', () => {
       const config = getCategoryConfig('code.claude.com', 'hooks');
       expect(config.name).toBe('Claude Code');
-      expect(config.emoji).toBeTruthy();
+      expect(config.icon).toBeTruthy();
     });
   });
 });
@@ -124,7 +124,7 @@ describe('format-change-summary', () => {
         title: 'Vision',
         changeType: 'modified',
         diffSummary: 'Added image input examples',
-        categoryEmoji: '📡',
+        categoryEmoji: '',
       });
       expect(result).toContain('Vision');
       expect(result).toContain('Added image input examples');
@@ -135,7 +135,7 @@ describe('format-change-summary', () => {
         title: 'Token Counting',
         changeType: 'added',
         diffSummary: null,
-        categoryEmoji: '📡',
+        categoryEmoji: '',
       });
       expect(result).toContain('Token Counting');
       expect(result).toContain('새 페이지 추가됨');
@@ -146,7 +146,7 @@ describe('format-change-summary', () => {
         title: 'Very Long Title',
         changeType: 'modified',
         diffSummary: 'A'.repeat(200),
-        categoryEmoji: '📡',
+        categoryEmoji: '',
         maxLength: 50,
       });
       expect(result.length).toBeLessThanOrEqual(50);
