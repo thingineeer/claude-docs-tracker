@@ -31,9 +31,12 @@ describe('categories', () => {
       expect(getCategoryForPage('platform.claude.com', 'about-claude')).toBe('guides');
       expect(getCategoryForPage('platform.claude.com', 'prompt-engineering')).toBe('guides');
       expect(getCategoryForPage('platform.claude.com', 'agent-sdk')).toBe('agent-tools');
+      expect(getCategoryForPage('platform.claude.com', 'agents-and-tools')).toBe('agent-tools');
+      expect(getCategoryForPage('platform.claude.com', 'test-and-evaluate')).toBe('guides');
       expect(getCategoryForPage('platform.claude.com', 'release-notes')).toBe('release-notes');
       expect(getCategoryForPage('platform.claude.com', 'intro')).toBe('getting-started');
       expect(getCategoryForPage('platform.claude.com', 'get-started')).toBe('getting-started');
+      expect(getCategoryForPage('platform.claude.com', 'home')).toBe('getting-started');
     });
 
     it('handles null section', () => {
@@ -63,6 +66,9 @@ describe('categories', () => {
         ['platform.claude.com', 'release-notes'],
         ['platform.claude.com', 'intro'],
         ['platform.claude.com', 'build-with-claude'],
+        ['platform.claude.com', 'agents-and-tools'],
+        ['platform.claude.com', 'test-and-evaluate'],
+        ['platform.claude.com', 'home'],
         ['platform.claude.com', null],
       ];
 

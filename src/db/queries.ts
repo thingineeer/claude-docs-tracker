@@ -191,10 +191,10 @@ export function getCategoryFromPage(domain: string, section: string | null): str
     return 'claude-code';
   }
   if (section === 'release-notes') return 'release-notes';
-  if (section === 'agent-sdk') return 'agent-tools';
-  if (section && ['intro', 'get-started'].includes(section)) return 'getting-started';
+  if (section && ['agent-sdk', 'agents-and-tools'].includes(section)) return 'agent-tools';
+  if (section && ['intro', 'get-started', 'home'].includes(section)) return 'getting-started';
   if (section && ['api', 'administration'].includes(section)) return 'api-reference';
-  if (section && ['build-with-claude', 'about-claude', 'prompt-engineering', 'resources'].includes(section)) return 'guides';
+  if (section && ['build-with-claude', 'about-claude', 'prompt-engineering', 'resources', 'test-and-evaluate'].includes(section)) return 'guides';
   if (!section) return 'getting-started';
   return 'guides';
 }

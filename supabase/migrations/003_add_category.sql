@@ -11,10 +11,10 @@ UPDATE pages SET category = CASE
   WHEN domain = 'code.claude.com' THEN 'claude-code'
   -- platform.claude.com section mappings
   WHEN section = 'release-notes' THEN 'release-notes'
-  WHEN section = 'agent-sdk' THEN 'agent-tools'
-  WHEN section IN ('intro', 'get-started') THEN 'getting-started'
+  WHEN section IN ('agent-sdk', 'agents-and-tools') THEN 'agent-tools'
+  WHEN section IN ('intro', 'get-started', 'home') THEN 'getting-started'
   WHEN section IN ('api', 'administration') THEN 'api-reference'
-  WHEN section IN ('build-with-claude', 'about-claude', 'prompt-engineering', 'resources') THEN 'guides'
+  WHEN section IN ('build-with-claude', 'about-claude', 'prompt-engineering', 'resources', 'test-and-evaluate') THEN 'guides'
   WHEN section IS NULL THEN 'getting-started'
   ELSE 'guides'
 END;

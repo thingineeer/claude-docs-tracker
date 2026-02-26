@@ -97,15 +97,22 @@ const PLATFORM_SECTION_MAP: Record<string, CategoryType> = {
 
   // Agent SDK & Tools
   'agent-sdk': 'agent-tools',
+  'agents-and-tools': 'agent-tools',
 
   // Administration -> API Reference (platform management)
   'administration': 'api-reference',
+
+  // Test & Evaluate -> Guides
+  'test-and-evaluate': 'guides',
 
   // Release Notes
   'release-notes': 'release-notes',
 
   // Resources -> Guides
   'resources': 'guides',
+
+  // Home (Documentation main page)
+  'home': 'getting-started',
 };
 
 /**
