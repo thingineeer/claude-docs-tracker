@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { getSupabaseAdmin } from './supabase';
 import type { ChangeType } from './types';
 
 export async function upsertPage(page: {
@@ -7,7 +7,7 @@ export async function upsertPage(page: {
   section: string | null;
   title: string;
 }) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('pages')
     .upsert({ ...page, last_crawled_at: new Date().toISOString() }, { onConflict: 'url' })
     .select()
@@ -24,14 +24,14 @@ export async function insertSnapshot(snapshot: {
   sidebar_tree: Record<string, unknown> | null;
   crawled_at: string;
 }) {
-  const { data, error } = await supabaseAdmin.from('snapshots').insert(snapshot).select().single();
+  const { data, error } = await getSupabaseAdmin().from('snapshots').insert(snapshot).select().single();
 
   if (error) throw error;
   return data;
 }
 
 export async function getLatestSnapshot(pageId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('snapshots')
     .select()
     .eq('page_id', pageId)
@@ -52,14 +52,14 @@ export async function insertChange(change: {
   diff_summary: string | null;
   detected_at: string;
 }) {
-  const { data, error } = await supabaseAdmin.from('changes').insert(change).select().single();
+  const { data, error } = await getSupabaseAdmin().from('changes').insert(change).select().single();
 
   if (error) throw error;
   return data;
 }
 
 export async function getChangesByDate(date: string) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('changes')
     .select('*, pages(*)')
     .eq('detected_at', date)
@@ -70,7 +70,7 @@ export async function getChangesByDate(date: string) {
 }
 
 export async function getLatestChanges(limit = 20) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('changes')
     .select('*, pages(*)')
     .order('detected_at', { ascending: false })
@@ -81,7 +81,7 @@ export async function getLatestChanges(limit = 20) {
 }
 
 export async function getPageHistory(pageId: string) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('changes')
     .select('*, snapshots!changes_snapshot_after_id_fkey(*)')
     .eq('page_id', pageId)
@@ -99,7 +99,7 @@ export async function upsertDailyReport(report: {
   removed_pages: number;
   ai_summary: string | null;
 }) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('daily_reports')
     .upsert(report, { onConflict: 'report_date' })
     .select()
@@ -110,7 +110,7 @@ export async function upsertDailyReport(report: {
 }
 
 export async function getDailyReport(date: string) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('daily_reports')
     .select()
     .eq('report_date', date)
@@ -121,7 +121,7 @@ export async function getDailyReport(date: string) {
 }
 
 export async function getRecentReports(days = 7) {
-  const { data, error } = await supabaseAdmin
+  const { data, error } = await getSupabaseAdmin()
     .from('daily_reports')
     .select()
     .order('report_date', { ascending: false })
