@@ -194,9 +194,13 @@ export async function getChangesByDateWithPages(date: string) {
 }
 
 export async function getPageCount() {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
   const { count, error } = await getSupabaseAdmin()
     .from('pages')
-    .select('*', { count: 'exact', head: true });
+    .select('*', { count: 'exact', head: true })
+    .gte('last_crawled_at', thirtyDaysAgo.toISOString());
 
   if (error) throw error;
   return count ?? 0;
@@ -243,6 +247,29 @@ export async function getRecentChangeCounts(days = 7) {
   }
 
   return dates.map((date) => ({ date, count: countMap[date] ?? 0 }));
+}
+
+export async function getDocumentationPages() {
+  const { data, error } = await getSupabaseAdmin()
+    .from('pages')
+    .select('id, url, domain')
+    .in('domain', ['platform.claude.com', 'code.claude.com']);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getLatestSnapshotForPage(pageId: string) {
+  const { data, error } = await getSupabaseAdmin()
+    .from('snapshots')
+    .select('id')
+    .eq('page_id', pageId)
+    .order('crawled_at', { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error && error.code !== 'PGRST116') throw error;
+  return data;
 }
 
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility

@@ -138,7 +138,7 @@ describe('format-change-summary', () => {
         categoryEmoji: '',
       });
       expect(result).toContain('Token Counting');
-      expect(result).toContain('새 페이지 추가됨');
+      expect(result).toContain('New page added');
     });
 
     it('truncates long summaries', () => {

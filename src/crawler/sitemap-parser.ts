@@ -9,7 +9,7 @@ const TARGET_DOMAINS = [
 ];
 
 const SITEMAP_URLS = [
-  'https://platform.claude.com/docs/sitemap.xml',
+  'https://platform.claude.com/sitemap.xml',
   'https://code.claude.com/docs/sitemap.xml',
 ];
 
@@ -45,15 +45,22 @@ async function parseSitemap(url: string): Promise<SitemapEntry[]> {
 
 export function parseSitemapXml(xml: string): SitemapEntry[] {
   const entries: SitemapEntry[] = [];
-  const urlRegex = /<url>\s*<loc>([^<]+)<\/loc>(?:\s*<lastmod>([^<]+)<\/lastmod>)?\s*<\/url>/g;
+  const urlRegex = /<url>([\s\S]*?)<\/url>/g;
+  const locRegex = /<loc>([^<]+)<\/loc>/;
+  const lastmodRegex = /<lastmod>([^<]+)<\/lastmod>/;
 
   let match;
   while ((match = urlRegex.exec(xml)) !== null) {
-    const url = match[1].trim();
-    const lastmod = match[2]?.trim();
+    const urlBlock = match[1];
+    const locMatch = locRegex.exec(urlBlock);
+    if (!locMatch) continue;
+
+    const url = locMatch[1].trim();
+    const lastmodMatch = lastmodRegex.exec(urlBlock);
+    const lastmod = lastmodMatch?.[1]?.trim();
 
     if (isDocumentationUrl(url)) {
-      entries.push({ url, lastmod });
+      entries.push({ url, ...(lastmod ? { lastmod } : {}) });
     }
   }
 
@@ -61,7 +68,21 @@ export function parseSitemapXml(xml: string): SitemapEntry[] {
 }
 
 function isDocumentationUrl(url: string): boolean {
-  return TARGET_DOMAINS.some((domain) => url.startsWith(domain));
+  return TARGET_DOMAINS.some((domain) => url.startsWith(domain)) && isEnglishLocale(url);
+}
+
+function isEnglishLocale(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    const pathParts = parsed.pathname.split('/').filter(Boolean);
+    // URL pattern: /docs/{locale}/... — only track English (en)
+    if (pathParts.length >= 2 && pathParts[0] === 'docs') {
+      return pathParts[1] === 'en';
+    }
+    return true; // Allow URLs that don't match the locale pattern
+  } catch {
+    return false;
+  }
 }
 
 export function getDomainFromUrl(url: string): string {
