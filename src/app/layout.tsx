@@ -15,8 +15,25 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Claude Docs Tracker',
-  description: 'Daily diff tracker for Claude official documentation',
+  title: {
+    default: 'Claude Docs Tracker',
+    template: '%s - Claude Docs Tracker',
+  },
+  description: 'Daily documentation change tracker for Claude API, Claude Code, and Claude Apps',
+  openGraph: {
+    title: 'Claude Docs Tracker',
+    description: 'Daily documentation change tracker for Claude API, Claude Code, and Claude Apps',
+    url: 'https://claude-docs-tracker.vercel.app',
+    siteName: 'Claude Docs Tracker',
+    type: 'website',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Claude Docs Tracker',
+    description: 'Daily documentation change tracker for Claude API, Claude Code, and Claude Apps',
+  },
+  metadataBase: new URL('https://claude-docs-tracker.vercel.app'),
 };
 
 export default function RootLayout({
