@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import { format, subDays } from 'date-fns';
-import { getLatestChanges, getRecentReports } from '@/db/queries';
+import { format } from 'date-fns';
+import { getLatestChanges, getPageCount, getTodayStats, getRecentChangeCounts } from '@/db/queries';
 import { ChangeCard } from '@/components/change-card';
 import { TimelineBar } from '@/components/timeline-bar';
 import type { ChangeType } from '@/db/types';
@@ -9,23 +9,23 @@ export const revalidate = 3600;
 
 export default async function HomePage() {
   let changes: Awaited<ReturnType<typeof getLatestChanges>> = [];
-  let reports: Awaited<ReturnType<typeof getRecentReports>> = [];
+  let pageCount = 0;
+  let todayStats = { new_pages: 0, modified_pages: 0, removed_pages: 0, total: 0 };
+  let timelineData: { date: string; count: number }[] = [];
   let fetchError = false;
 
+  const today = format(new Date(), 'yyyy-MM-dd');
+
   try {
-    [changes, reports] = await Promise.all([getLatestChanges(10), getRecentReports(7)]);
+    [changes, pageCount, todayStats, timelineData] = await Promise.all([
+      getLatestChanges(10),
+      getPageCount(),
+      getTodayStats(today),
+      getRecentChangeCounts(7),
+    ]);
   } catch {
     fetchError = true;
   }
-
-  const today = format(new Date(), 'yyyy-MM-dd');
-  const todayReport = reports.find((r) => r.report_date === today);
-
-  const timelineData = Array.from({ length: 7 }, (_, i) => {
-    const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
-    const report = reports.find((r) => r.report_date === date);
-    return { date, count: report?.total_changes ?? 0 };
-  });
 
   return (
     <div className="space-y-12">
@@ -46,24 +46,24 @@ export default async function HomePage() {
       {/* Stats */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
-          <div className="text-3xl font-bold text-accent">138+</div>
+          <div className="text-3xl font-bold text-accent">{pageCount}</div>
           <div className="text-sm text-muted mt-1">Pages Tracked</div>
         </div>
         <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
           <div className="text-3xl font-bold text-green-600">
-            {todayReport?.new_pages ?? 0}
+            {todayStats.new_pages}
           </div>
           <div className="text-sm text-muted mt-1">New Today</div>
         </div>
         <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
           <div className="text-3xl font-bold text-blue-600">
-            {todayReport?.modified_pages ?? 0}
+            {todayStats.modified_pages}
           </div>
           <div className="text-sm text-muted mt-1">Modified Today</div>
         </div>
         <div className="rounded-xl border border-border bg-surface/50 p-5 text-center">
           <div className="text-3xl font-bold text-red-600">
-            {todayReport?.removed_pages ?? 0}
+            {todayStats.removed_pages}
           </div>
           <div className="text-sm text-muted mt-1">Removed Today</div>
         </div>
