@@ -53,6 +53,10 @@
 - [x] 실제 변경사항 시드 데이터 투입 (16건, 2026-01-29~02-26) ✅
 - [x] Vercel 배포 완료 ✅ (2026-02-26)
 - [x] GitHub → Vercel 자동 배포 연결 ✅ (main push/merge 시 자동 프로덕션 배포)
+- [x] 초기 문서 크롤링 완료 ✅ (2026-02-26)
+  - code.claude.com: 57페이지 (fetch, SSR)
+  - platform.claude.com: 80페이지 (Playwright, CSR)
+  - 총 137개 문서 초기 스냅샷 Supabase 저장
 - [x] v1.1 개선 작업 완료 ✅ (2026-02-26)
   - [x] A-1: 단수/복수 문법 수정
   - [x] A-2: 다크/라이트 모드 토글 (localStorage, class 기반)
@@ -70,6 +74,7 @@
 - Lint: 0 에러
 - Build: 성공 (14 라우트 — /search 추가)
 - Tests: 33/33 통과
+- 크롤링 데이터: 137개 문서 초기 스냅샷 (code: 57, platform: 80)
 - 마지막 확인: 2026-02-26
 
 ## 주요 결정 사항
@@ -82,6 +87,8 @@
 | 2026-02-26 | Vercel 1차 배포 | 무료 티어, Next.js 네이티브 |
 | 2026-02-26 | class 기반 다크모드 | prefers-color-scheme → html.dark 클래스로 전환, localStorage 저장 |
 | 2026-02-26 | AI 요약 한국어 전용 | 영한 혼합 어색 → 한국어만 생성, 고유명사만 영어 허용 |
+| 2026-02-26 | platform.claude.com은 Playwright 필수 | CSR 앱이라 fetch로는 JS shell만 반환, Playwright로 해결 |
+| 2026-02-26 | code.claude.com은 SSR | sitemap 있고 fetch로 콘텐츠 정상 반환 |
 
 ## 보안 주의사항
 
