@@ -31,7 +31,7 @@ export async function fetchSitemapUrls(): Promise<SitemapEntry[]> {
 async function parseSitemap(url: string): Promise<SitemapEntry[]> {
   const response = await fetch(url, {
     headers: {
-      'User-Agent': 'claude-docs-tracker/1.0 (https://github.com/cgmsw/claude-docs-tracker)',
+      'User-Agent': 'claude-docs-tracker/1.0 (https://github.com/thingineeer/claude-docs-tracker)',
     },
   });
 

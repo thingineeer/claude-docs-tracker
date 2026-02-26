@@ -24,7 +24,7 @@ export async function crawlPage(url: string, retries = MAX_RETRIES): Promise<Cra
     try {
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'claude-docs-tracker/1.0 (https://github.com/cgmsw/claude-docs-tracker)',
+          'User-Agent': 'claude-docs-tracker/1.0 (https://github.com/thingineeer/claude-docs-tracker)',
           Accept: 'text/html,application/xhtml+xml',
         },
       });

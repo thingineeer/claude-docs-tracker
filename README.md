@@ -51,7 +51,7 @@ Claude's documentation changes frequently, but many updates go unannounced:
 1. Clone and install:
 
 ```bash
-git clone https://github.com/cgmsw/claude-docs-tracker.git
+git clone https://github.com/thingineeer/claude-docs-tracker.git
 cd claude-docs-tracker
 npm install
 ```
