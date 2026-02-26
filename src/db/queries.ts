@@ -130,3 +130,31 @@ export async function getRecentReports(days = 7) {
   if (error) throw error;
   return data;
 }
+
+export async function getChangesByMonth(year: number, month: number) {
+  const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+  const endMonth = month === 12 ? 1 : month + 1;
+  const endYear = month === 12 ? year + 1 : year;
+  const endDate = `${endYear}-${String(endMonth).padStart(2, '0')}-01`;
+
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('id, change_type, detected_at, diff_summary, pages(id, title, url, domain, section, category)')
+    .gte('detected_at', startDate)
+    .lt('detected_at', endDate)
+    .order('detected_at', { ascending: true });
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getChangesByDateWithPages(date: string) {
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('id, change_type, detected_at, diff_summary, diff_html, pages(id, title, url, domain, section, category)')
+    .eq('detected_at', date)
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  return data;
+}
