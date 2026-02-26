@@ -53,11 +53,22 @@
 - [x] 실제 변경사항 시드 데이터 투입 (16건, 2026-01-29~02-26) ✅
 - [x] Vercel 배포 완료 ✅ (2026-02-26)
 - [x] GitHub → Vercel 자동 배포 연결 ✅ (main push/merge 시 자동 프로덕션 배포)
+- [x] v1.1 개선 작업 완료 ✅ (2026-02-26)
+  - [x] A-1: 단수/복수 문법 수정
+  - [x] A-2: 다크/라이트 모드 토글 (localStorage, class 기반)
+  - [x] A-3: 타임라인 차트 개선 (카운트 라벨, 클릭 네비게이션)
+  - [x] A-4: URL 표시 정리 (도메인/.../경로 요약 + 툴팁)
+  - [x] A-5: Footer 추가 (GitHub, RSS, MIT)
+  - [x] A-6: SEO 메타데이터 (Open Graph, Twitter Card)
+  - [x] B-1: AI Summary 프롬프트 개선 (자연스러운 한국어)
+  - [x] B-2: Sidebar Diff empty state 개선
+  - [x] B-3: 날짜 네비게이션 개선 (date picker, 오늘 버튼)
+  - [x] B-4: 검색 기능 추가 (/search, API ?q= 파라미터)
 
 ## 빌드 상태
 
 - Lint: 0 에러
-- Build: 성공 (13 라우트)
+- Build: 성공 (14 라우트 — /search 추가)
 - Tests: 33/33 통과
 - 마지막 확인: 2026-02-26
 
@@ -69,6 +80,8 @@
 | 2026-02-26 | Conventional Commits 채택 | 오픈소스 표준, 자동 CHANGELOG 가능 |
 | 2026-02-26 | 폴더명 claude-docs-tracker | 직관적, 검색 친화적 |
 | 2026-02-26 | Vercel 1차 배포 | 무료 티어, Next.js 네이티브 |
+| 2026-02-26 | class 기반 다크모드 | prefers-color-scheme → html.dark 클래스로 전환, localStorage 저장 |
+| 2026-02-26 | AI 요약 한국어 전용 | 영한 혼합 어색 → 한국어만 생성, 고유명사만 영어 허용 |
 
 ## 보안 주의사항
 
