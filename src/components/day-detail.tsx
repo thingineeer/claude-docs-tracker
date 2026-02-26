@@ -41,10 +41,29 @@ function SkeletonLoader() {
 
 function EmptyState() {
   return (
-    <div className="flex items-center justify-center py-12">
-      <p className="text-muted text-sm">
-        이 날은 문서 변경이 없습니다.
-      </p>
+    <div className="flex flex-col items-center justify-center py-12 gap-3">
+      {/* Calendar with checkmark SVG icon */}
+      <svg
+        className="w-10 h-10 text-muted/50"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <rect x="3" y="4" width="18" height="18" rx="2" />
+        <path d="M16 2v4M8 2v4M3 10h18" />
+        <path d="M9 16l2 2 4-4" />
+      </svg>
+      <div className="text-center">
+        <p className="text-muted text-sm font-medium">
+          변경 사항 없음
+        </p>
+        <p className="text-muted/60 text-xs mt-1">
+          이 날은 문서 변경이 감지되지 않았습니다
+        </p>
+      </div>
     </div>
   );
 }
@@ -174,9 +193,21 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium hover:text-accent transition-colors line-clamp-1"
+                            className="text-sm font-medium hover:text-accent transition-colors line-clamp-1 inline-flex items-center gap-1"
                           >
-                            {decodeHtmlEntities(item.title)}
+                            <span className="truncate">{decodeHtmlEntities(item.title)}</span>
+                            <svg
+                              className="w-3 h-3 shrink-0 opacity-40"
+                              viewBox="0 0 12 12"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <path d="M3.5 1.5h7v7" />
+                              <path d="M10.5 1.5L1.5 10.5" />
+                            </svg>
                           </a>
 
                           {/* One-line summary */}
