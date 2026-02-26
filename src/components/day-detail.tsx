@@ -10,10 +10,10 @@ interface ChangeItem {
   id: string;
   title: string;
   url: string;
-  change_type: ChangeType;
-  diff_summary: string | null;
+  changeType: ChangeType;
+  summary: string | null;
   category: CategoryType;
-  detected_at: string;
+  formattedSummary: string;
 }
 
 interface DayDetailProps {
@@ -64,9 +64,9 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
         if (!res.ok) {
           throw new Error(`Failed to fetch: ${res.status}`);
         }
-        const data: ChangeItem[] = await res.json();
+        const json = await res.json();
         if (!cancelled) {
-          setChanges(data);
+          setChanges(json.changes ?? []);
         }
       } catch (err) {
         if (!cancelled) {
@@ -152,7 +152,7 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
                 {/* Change items */}
                 <div className="space-y-2 pl-1">
                   {items.map((item) => {
-                    const typeIcon = getChangeTypeIcon(item.change_type);
+                    const typeIcon = getChangeTypeIcon(item.changeType);
 
                     return (
                       <div
@@ -178,9 +178,9 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
                           </a>
 
                           {/* One-line summary */}
-                          {item.diff_summary && (
+                          {item.summary && (
                             <p className="text-xs text-muted line-clamp-1 mt-0.5">
-                              {item.diff_summary}
+                              {item.summary}
                             </p>
                           )}
                         </div>
