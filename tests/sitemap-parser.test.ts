@@ -35,6 +35,24 @@ describe('parseSitemapXml', () => {
     </urlset>`;
     expect(parseSitemapXml(xml)).toHaveLength(0);
   });
+
+  it('filters out non-English locale URLs', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://platform.claude.com/docs/en/overview</loc></url>
+  <url><loc>https://platform.claude.com/docs/ja/overview</loc></url>
+  <url><loc>https://platform.claude.com/docs/ko/overview</loc></url>
+  <url><loc>https://platform.claude.com/docs/de/overview</loc></url>
+  <url><loc>https://code.claude.com/docs/en/quickstart</loc></url>
+  <url><loc>https://code.claude.com/docs/zh-CN/quickstart</loc></url>
+  <url><loc>https://code.claude.com/docs/fr/quickstart</loc></url>
+</urlset>`;
+
+    const entries = parseSitemapXml(xml);
+    expect(entries).toHaveLength(2);
+    expect(entries[0].url).toBe('https://platform.claude.com/docs/en/overview');
+    expect(entries[1].url).toBe('https://code.claude.com/docs/en/quickstart');
+  });
 });
 
 describe('getDomainFromUrl', () => {
