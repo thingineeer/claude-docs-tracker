@@ -1,5 +1,5 @@
 import { format, subDays, addDays } from 'date-fns';
-import { getChangesByDate, getDailyReport } from '@/db/queries';
+import { getChangesByDate } from '@/db/queries';
 import { ChangeCard } from '@/components/change-card';
 import { DateNav } from '@/components/date-nav';
 import type { ChangeType } from '@/db/types';
@@ -26,11 +26,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ChangesDatePage({ params }: PageProps) {
   const { date } = await params;
   let changes: Awaited<ReturnType<typeof getChangesByDate>> = [];
-  let report: Awaited<ReturnType<typeof getDailyReport>> = null;
   let fetchError = false;
 
   try {
-    [changes, report] = await Promise.all([getChangesByDate(date), getDailyReport(date)]);
+    changes = await getChangesByDate(date);
   } catch {
     fetchError = true;
   }
@@ -52,13 +51,6 @@ export default async function ChangesDatePage({ params }: PageProps) {
         nextDate={nextDate}
         isToday={isToday}
       />
-
-      {report?.ai_summary && (
-        <section className="rounded-lg border border-accent/30 bg-accent/5 p-4">
-          <h2 className="text-sm font-medium text-accent mb-2">AI Summary</h2>
-          <p className="text-sm">{report.ai_summary}</p>
-        </section>
-      )}
 
       {fetchError ? (
         <p className="text-muted text-sm">Database connection required.</p>
