@@ -101,16 +101,19 @@ WEBHOOK_SLACK_URL=
 claude-docs-tracker/
 ├── src/
 │   ├── app/              # Next.js App Router 페이지
-│   │   ├── api/          # API 라우트
-│   │   ├── changes/      # 일별 변경 페이지
-│   │   └── page.tsx      # 홈
+│   │   ├── api/          # API 라우트 (calendar, changes, crawl, cron, feed)
+│   │   ├── calendar/     # 캘린더 페이지
+│   │   ├── changes/      # 일별 변경 페이지 ([date] 동적)
+│   │   ├── search/       # 검색 페이지
+│   │   └── page.tsx      # 홈 (스탯 + Dot Strip + Recent Changes)
 │   ├── components/       # 공유 컴포넌트
 │   ├── crawler/          # 크롤링 엔진
 │   ├── db/               # DB 클라이언트 & 쿼리
-│   └── lib/              # 유틸리티
+│   └── lib/              # 유틸리티 (categories, category-icons, decode-entities, format-change-summary)
+├── scripts/              # 크롤링/마이그레이션 스크립트
 ├── supabase/
-│   └── migrations/       # DB 마이그레이션
-├── tests/                # 테스트
+│   └── migrations/       # DB 마이그레이션 (001~003)
+├── tests/                # 테스트 (79개, Jest)
 ├── public/               # 정적 파일
 ├── .env.example          # 환경변수 템플릿
 ├── CLAUDE.md             # 이 파일
@@ -118,6 +121,15 @@ claude-docs-tracker/
 ├── PLAN.md               # 기획서
 └── README.md             # 프로젝트 소개
 ```
+
+## 현재 상태 요약 (2026-02-26)
+
+- 네비: Home / Calendar / Search (3개)
+- 카테고리: platform-docs / agent-tools / claude-code / release-notes (4개, SVG 아이콘)
+- 홈페이지: 인라인 스탯 + Activity Dot Strip + Recent Changes
+- DB: 147 pages, 16 changes (초기 크롤링 데이터 삭제 후 실제 변경만)
+- 삭제된 페이지: /sidebar-diff, /changes (redirect)
+- 모든 스탯은 daily_reports 미사용, changes 테이블 직접 집계
 
 ## 작업 시작 전 필수 확인
 
