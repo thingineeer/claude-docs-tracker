@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ChangeCard } from '@/components/change-card';
 import type { ChangeType } from '@/db/types';
@@ -14,7 +14,7 @@ interface SearchResult {
   pages: { title: string; url: string } | null;
 }
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialQuery = searchParams.get('q') ?? '';
@@ -93,5 +93,13 @@ export default function SearchPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="text-muted text-sm">Loading search...</div>}>
+      <SearchContent />
+    </Suspense>
   );
 }
