@@ -130,3 +130,26 @@ export async function getRecentReports(days = 7) {
   if (error) throw error;
   return data;
 }
+
+export async function searchChanges(query: string, limit = 50) {
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('*, pages!inner(*)')
+    .or(`diff_summary.ilike.%${query}%,pages.title.ilike.%${query}%`)
+    .order('detected_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    // Fallback: search only in diff_summary if foreign table filter fails
+    const { data: fallbackData, error: fallbackError } = await getSupabaseAdmin()
+      .from('changes')
+      .select('*, pages(*)')
+      .ilike('diff_summary', `%${query}%`)
+      .order('detected_at', { ascending: false })
+      .limit(limit);
+
+    if (fallbackError) throw fallbackError;
+    return fallbackData;
+  }
+  return data;
+}
