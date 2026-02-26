@@ -73,14 +73,9 @@ export default async function HomePage() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold">Last 7 Days</h2>
-          <div className="flex items-center gap-3">
-            <Link href="/changes" className="text-sm text-accent hover:underline">
-              View history
-            </Link>
-            <Link href="/calendar" className="text-sm text-accent hover:underline">
-              Calendar
-            </Link>
-          </div>
+          <Link href="/calendar" className="text-sm text-accent hover:underline">
+            Calendar
+          </Link>
         </div>
         <div className="rounded-xl border border-border bg-surface/50 p-5">
           <TimelineBar data={timelineData} />

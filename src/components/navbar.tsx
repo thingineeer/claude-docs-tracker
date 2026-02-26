@@ -28,9 +28,7 @@ export function Navbar() {
 
   const navLinks = [
     { href: '/', label: 'Today' },
-    { href: '/changes', label: 'History' },
     { href: '/calendar', label: 'Calendar' },
-    { href: '/sidebar-diff', label: 'Sidebar Diff' },
     { href: '/search', label: 'Search', icon: true },
     { href: '/api/feed/rss', label: 'RSS', external: true },
   ];
