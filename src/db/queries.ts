@@ -156,10 +156,17 @@ export async function searchChanges(query: string, limit = 50) {
 }
 
 export function getCategoryFromPage(domain: string, section: string | null): string {
-  if (domain === 'code.claude.com') return 'claude-code';
+  if (domain === 'code.claude.com') {
+    if (section === 'overview' || section === 'quickstart') return 'getting-started';
+    if (section === 'mcp') return 'agent-tools';
+    if (section === 'changelog') return 'release-notes';
+    return 'claude-code';
+  }
   if (section === 'release-notes') return 'release-notes';
-  if (section === 'agent-sdk') return 'agent-sdk';
-  if (section && ['intro', 'get-started', 'quickstart'].includes(section)) return 'getting-started';
-  if (domain === 'platform.claude.com') return 'claude-api';
-  return 'general';
+  if (section === 'agent-sdk') return 'agent-tools';
+  if (section && ['intro', 'get-started'].includes(section)) return 'getting-started';
+  if (section && ['api', 'administration'].includes(section)) return 'api-reference';
+  if (section && ['build-with-claude', 'about-claude', 'prompt-engineering', 'resources'].includes(section)) return 'guides';
+  if (!section) return 'getting-started';
+  return 'guides';
 }
