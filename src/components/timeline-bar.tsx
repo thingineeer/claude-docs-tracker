@@ -6,6 +6,13 @@ interface TimelineBarProps {
   data: { date: string; count: number }[];
 }
 
+function getBarHeight(count: number, maxCount: number): number {
+  if (count === 0) return 0;
+  if (maxCount <= 1) return 100;
+  const scaled = Math.sqrt(count) / Math.sqrt(maxCount);
+  return Math.max(scaled * 100, 8);
+}
+
 export function TimelineBar({ data }: TimelineBarProps) {
   const router = useRouter();
   const maxCount = Math.max(...data.map((d) => d.count), 1);
@@ -20,7 +27,7 @@ export function TimelineBar({ data }: TimelineBarProps) {
           <div
             className="w-full bg-accent/80 hover:bg-accent rounded-t transition-colors cursor-pointer"
             style={{
-              height: `${Math.max((item.count / maxCount) * 100, 4)}%`,
+              height: `${getBarHeight(item.count, maxCount)}%`,
               minHeight: item.count > 0 ? '4px' : '2px',
             }}
             title={`${item.date}: ${item.count} changes`}
