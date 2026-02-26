@@ -46,14 +46,18 @@ export async function generateChangeSummary(
   diffText?: string,
 ): Promise<string> {
   const prompt = diffText
-    ? `Summarize this documentation change in 1 sentence (bilingual: English then Korean).
+    ? `Summarize this documentation change concisely in Korean only.
 Page: "${pageTitle}"
 Change type: ${changeType}
 Diff:
 ${diffText.slice(0, 2000)}
 
-Format: "English summary | 한국어 요약"`
-    : `A documentation page "${pageTitle}" was ${changeType}. Write a 1-sentence summary (English | 한국어).`;
+Rules:
+- Write a natural Korean sentence (1-2 sentences max)
+- Do not mix English words like "pages" or "changes" into Korean
+- Use the page title as-is (English names are OK for proper nouns)
+- Example: "Claude Code v2.1.59의 새로운 기능이 문서에 추가되었습니다."`
+    : `문서 페이지 "${pageTitle}"가 ${changeType === 'added' ? '새로 추가' : changeType === 'removed' ? '삭제' : '수정'}되었습니다. 한국어로 자연스러운 1문장 요약을 작성하세요.`;
 
   return callClaude([{ role: 'user', content: prompt }], 200);
 }
@@ -63,14 +67,16 @@ export async function generateDailySummary(results: ProcessResult[]): Promise<st
   const modified = results.filter((r) => r.status === 'modified');
   const today = new Date().toISOString().split('T')[0];
 
-  const prompt = `Summarize today's Claude documentation changes in 2-3 sentences (bilingual: English then Korean).
+  const prompt = `오늘의 Claude 문서 변경사항을 한국어로 2-3문장으로 요약하세요.
 
-New pages (${newPages.length}): ${newPages.map((r) => r.url).join(', ') || 'None'}
-Modified pages (${modified.length}): ${modified.map((r) => r.url).join(', ') || 'None'}
+새 문서 ${newPages.length}건: ${newPages.map((r) => r.url).join(', ') || '없음'}
+수정된 문서 ${modified.length}건: ${modified.map((r) => r.url).join(', ') || '없음'}
 
-Format:
-English summary here.
-한국어 요약.`;
+규칙:
+- 한국어만 사용 (고유명사는 영어 OK)
+- "pages", "changes" 같은 영어 단어를 한국어 문장에 섞지 마세요
+- 숫자는 한국어 조사와 자연스럽게 연결
+- 예시: "새 문서 2건이 추가되었습니다. Claude Code v2.1.59 릴리즈 노트와 프롬프트 캐싱 가이드가 포함됩니다."`;
 
   const summary = await callClaude([{ role: 'user', content: prompt }], 300);
 
