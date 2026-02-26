@@ -63,7 +63,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
           {newPages.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold mb-3 text-green-600">
-                New Pages ({newPages.length})
+                {newPages.length === 1 ? 'New Page' : 'New Pages'} ({newPages.length})
               </h2>
               <div className="space-y-3">
                 {newPages.map((change) => {
@@ -87,7 +87,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
           {modifiedPages.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold mb-3 text-blue-600">
-                Modified Pages ({modifiedPages.length})
+                {modifiedPages.length === 1 ? 'Modified Page' : 'Modified Pages'} ({modifiedPages.length})
               </h2>
               <div className="space-y-3">
                 {modifiedPages.map((change) => {
@@ -111,7 +111,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
           {removedPages.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold mb-3 text-red-600">
-                Removed Pages ({removedPages.length})
+                {removedPages.length === 1 ? 'Removed Page' : 'Removed Pages'} ({removedPages.length})
               </h2>
               <div className="space-y-3">
                 {removedPages.map((change) => {
@@ -135,7 +135,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
           {sidebarChanges.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold mb-3 text-purple-600">
-                Sidebar Changes ({sidebarChanges.length})
+                {sidebarChanges.length === 1 ? 'Sidebar Change' : 'Sidebar Changes'} ({sidebarChanges.length})
               </h2>
               <div className="space-y-3">
                 {sidebarChanges.map((change) => {

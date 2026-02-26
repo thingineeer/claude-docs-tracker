@@ -35,7 +35,7 @@ export default async function HomePage() {
           {fetchError
             ? 'Unable to connect to database. Check your environment variables.'
             : todayReport
-              ? `${todayReport.total_changes} changes detected today`
+              ? `${todayReport.total_changes} ${todayReport.total_changes === 1 ? 'change' : 'changes'} detected today`
               : 'No changes detected today'}
         </p>
       </section>
@@ -44,15 +44,15 @@ export default async function HomePage() {
         <section className="grid grid-cols-3 gap-4">
           <div className="rounded-lg border border-border p-4 text-center">
             <div className="text-2xl font-bold text-green-600">{todayReport.new_pages}</div>
-            <div className="text-sm text-muted">New Pages</div>
+            <div className="text-sm text-muted">{todayReport.new_pages === 1 ? 'New Page' : 'New Pages'}</div>
           </div>
           <div className="rounded-lg border border-border p-4 text-center">
             <div className="text-2xl font-bold text-blue-600">{todayReport.modified_pages}</div>
-            <div className="text-sm text-muted">Modified</div>
+            <div className="text-sm text-muted">{todayReport.modified_pages === 1 ? 'Modified Page' : 'Modified Pages'}</div>
           </div>
           <div className="rounded-lg border border-border p-4 text-center">
             <div className="text-2xl font-bold text-red-600">{todayReport.removed_pages}</div>
-            <div className="text-sm text-muted">Removed</div>
+            <div className="text-sm text-muted">{todayReport.removed_pages === 1 ? 'Removed Page' : 'Removed Pages'}</div>
           </div>
         </section>
       )}
