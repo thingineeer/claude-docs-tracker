@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
 export function Navbar() {
+  const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(false);
 
@@ -13,6 +15,10 @@ export function Navbar() {
       setDark(true);
     }
   }, []);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const toggleTheme = () => {
     const next = !dark;
@@ -27,11 +33,15 @@ export function Navbar() {
   };
 
   const navLinks = [
-    { href: '/', label: 'Today' },
+    { href: '/', label: 'Home' },
     { href: '/calendar', label: 'Calendar' },
-    { href: '/search', label: 'Search', icon: true },
-    { href: '/api/feed/rss', label: 'RSS', external: true },
+    { href: '/search', label: 'Search' },
   ];
+
+  function isActive(href: string) {
+    if (href === '/') return pathname === '/';
+    return pathname.startsWith(href);
+  }
 
   return (
     <nav className="border-b border-border bg-background sticky top-0 z-50">
@@ -45,29 +55,25 @@ export function Navbar() {
             <span className="text-accent">{'}'}</span>
           </Link>
 
-          {/* Desktop nav — hidden below sm (640px) */}
-          <div className="hidden sm:flex items-center gap-6 text-sm">
+          {/* Desktop nav */}
+          <div className="hidden sm:flex items-center gap-1 text-sm">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="hover:text-accent transition-colors"
-                {...(link.external ? { target: '_blank' } : {})}
+                className={`px-3 py-1.5 rounded-md transition-colors ${
+                  isActive(link.href)
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'hover:text-accent hover:bg-surface'
+                }`}
               >
-                {link.icon ? (
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                ) : (
-                  link.label
-                )}
+                {link.label}
               </Link>
             ))}
           </div>
 
           {/* Right controls */}
           <div className="flex items-center gap-1 shrink-0">
-            {/* Dark mode toggle — always visible */}
             <button
               className="p-2 hover:text-accent transition-colors"
               onClick={toggleTheme}
@@ -84,7 +90,6 @@ export function Navbar() {
               )}
             </button>
 
-            {/* Hamburger — ONLY visible below sm (640px) */}
             <button
               className="sm:hidden p-2"
               onClick={() => setMobileOpen(!mobileOpen)}
@@ -101,10 +106,10 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile dropdown menu — ONLY visible below sm (640px) */}
+        {/* Mobile menu */}
         <div
           className={`sm:hidden overflow-hidden transition-all duration-200 ease-in-out ${
-            mobileOpen ? 'max-h-96 pb-3 border-t border-border mt-1' : 'max-h-0'
+            mobileOpen ? 'max-h-48 pb-3 border-t border-border mt-1' : 'max-h-0'
           }`}
         >
           <div className="flex flex-col gap-1 pt-2 text-sm">
@@ -112,9 +117,11 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
-                onClick={() => setMobileOpen(false)}
-                className="py-2.5 px-3 rounded-md hover:bg-surface transition-colors"
-                {...(link.external ? { target: '_blank' } : {})}
+                className={`py-2.5 px-3 rounded-md transition-colors ${
+                  isActive(link.href)
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'hover:bg-surface'
+                }`}
               >
                 {link.label}
               </Link>
