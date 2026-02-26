@@ -169,12 +169,40 @@ interface CrawlResult {
   contentLength: number;
 }
 
+// ─── HTML entity decoding ────────────────────────────────────────────────────
+
+function decodeHtmlEntities(text: string): string {
+  const entities: Record<string, string> = {
+    '&amp;': '&',
+    '&lt;': '<',
+    '&gt;': '>',
+    '&quot;': '"',
+    '&apos;': "'",
+    '&nbsp;': ' ',
+  };
+
+  let decoded = text;
+  for (const [entity, char] of Object.entries(entities)) {
+    decoded = decoded.replaceAll(entity, char);
+  }
+  // Hex entities: &#x27; &#x2F; etc.
+  decoded = decoded.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+  // Decimal entities: &#039; &#39; etc.
+  decoded = decoded.replace(/&#(\d+);/g, (_, dec) =>
+    String.fromCharCode(parseInt(dec, 10)),
+  );
+  return decoded;
+}
+
 // ─── HTML extraction ─────────────────────────────────────────────────────────
 
 function extractTitle(html: string): string {
   const match = html.match(/<title[^>]*>([^<]+)<\/title>/i);
   if (!match) return 'Untitled';
-  return match[1].replace(/\s*[-|–]\s*Claude.*$/i, '').trim() || match[1].trim();
+  const raw = match[1].replace(/\s*[-|–]\s*Claude.*$/i, '').trim() || match[1].trim();
+  return decodeHtmlEntities(raw);
 }
 
 function extractBodyText(html: string): string {
@@ -195,7 +223,16 @@ function extractBodyText(html: string): string {
   cleaned = cleaned.replace(/&lt;/g, '<');
   cleaned = cleaned.replace(/&gt;/g, '>');
   cleaned = cleaned.replace(/&quot;/g, '"');
+  cleaned = cleaned.replace(/&apos;/g, "'");
   cleaned = cleaned.replace(/&#039;/g, "'");
+  // Hex entities: &#x27; &#x2F; etc.
+  cleaned = cleaned.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) =>
+    String.fromCharCode(parseInt(hex, 16)),
+  );
+  // Decimal entities: &#39; etc.
+  cleaned = cleaned.replace(/&#(\d+);/g, (_, dec) =>
+    String.fromCharCode(parseInt(dec, 10)),
+  );
   cleaned = cleaned.replace(/\s+/g, ' ').trim();
 
   return cleaned;
