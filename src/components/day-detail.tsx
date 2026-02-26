@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { format, parseISO } from 'date-fns';
+import { enUS } from 'date-fns/locale/en-US';
 import { CATEGORIES, CATEGORY_ORDER } from '@/lib/categories';
 import type { CategoryType } from '@/lib/categories';
 import { CategoryIcon } from '@/lib/category-icons';
-import { getChangeTypeIcon } from '@/lib/format-change-summary';
+import { getChangeTypeLabel } from '@/lib/format-change-summary';
 import { decodeHtmlEntities } from '@/lib/decode-entities';
 import type { ChangeType } from '@/db/types';
 
@@ -58,13 +61,32 @@ function EmptyState() {
       </svg>
       <div className="text-center">
         <p className="text-muted text-sm font-medium">
-          변경 사항 없음
+          No changes on this day
         </p>
         <p className="text-muted/60 text-xs mt-1">
-          이 날은 문서 변경이 감지되지 않았습니다
+          No documentation changes were detected on this day
         </p>
       </div>
     </div>
+  );
+}
+
+function ChangeTypeBadge({ changeType }: { changeType: ChangeType }) {
+  const label = getChangeTypeLabel(changeType);
+
+  const colorMap: Record<ChangeType, string> = {
+    added: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    modified: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+    removed: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+    sidebar_changed: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium leading-none ${colorMap[changeType]}`}
+    >
+      {label}
+    </span>
   );
 }
 
@@ -72,6 +94,14 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
   const [changes, setChanges] = useState<ChangeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const formattedDate = (() => {
+    try {
+      return format(parseISO(date), 'EEEE, MMM d', { locale: enUS });
+    } catch {
+      return date;
+    }
+  })();
 
   useEffect(() => {
     let cancelled = false;
@@ -141,8 +171,9 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
         }
       `}</style>
 
+      {/* Header with formatted date */}
       <h3 className="text-base font-semibold mb-4">
-        {date}
+        {formattedDate}
       </h3>
 
       {loading && <SkeletonLoader />}
@@ -170,60 +201,69 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
                   </span>
                 </h4>
 
-                {/* Change items */}
+                {/* Change items as mini cards */}
                 <div className="space-y-2 pl-1">
-                  {items.map((item) => {
-                    const typeIcon = getChangeTypeIcon(item.changeType);
-
-                    return (
-                      <div
-                        key={item.id}
-                        className="flex items-start gap-2 py-1.5 px-2 rounded-md hover:bg-surface transition-colors"
+                  {items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-start gap-2.5 py-2 px-3 rounded-lg border border-border/50 hover:border-border hover:bg-surface/50 transition-colors"
+                    >
+                      {/* Category icon */}
+                      <span
+                        className="shrink-0 mt-0.5"
+                        style={{ color: config.color }}
                       >
-                        {/* Change type icon */}
-                        <span
-                          className={`font-mono text-sm font-bold shrink-0 w-4 text-center ${typeIcon.color}`}
-                        >
-                          {typeIcon.icon}
-                        </span>
+                        <CategoryIcon category={cat} className="w-4 h-4" />
+                      </span>
 
-                        <div className="min-w-0 flex-1">
-                          {/* Title as link */}
+                      <div className="min-w-0 flex-1">
+                        {/* Title + badge row */}
+                        <div className="flex items-center gap-2 flex-wrap">
                           <a
                             href={item.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm font-medium hover:text-accent transition-colors line-clamp-1 inline-flex items-center gap-1"
+                            className="text-sm font-medium hover:text-accent transition-colors line-clamp-1"
                           >
-                            <span className="truncate">{decodeHtmlEntities(item.title)}</span>
-                            <svg
-                              className="w-3 h-3 shrink-0 opacity-40"
-                              viewBox="0 0 12 12"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M3.5 1.5h7v7" />
-                              <path d="M10.5 1.5L1.5 10.5" />
-                            </svg>
+                            {decodeHtmlEntities(item.title)}
                           </a>
-
-                          {/* One-line summary */}
-                          {item.summary && (
-                            <p className="text-xs text-muted line-clamp-1 mt-0.5">
-                              {item.summary}
-                            </p>
-                          )}
+                          <ChangeTypeBadge changeType={item.changeType} />
                         </div>
+
+                        {/* One-line summary */}
+                        {item.summary && (
+                          <p className="text-xs text-muted line-clamp-1 mt-0.5">
+                            {item.summary}
+                          </p>
+                        )}
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             );
           })}
+
+          {/* View full details link */}
+          <div className="pt-2">
+            <Link
+              href={`/changes/${date}`}
+              className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors"
+            >
+              View full details
+              <svg
+                className="w-4 h-4"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M3 8h10M9 4l4 4-4 4" />
+              </svg>
+            </Link>
+          </div>
         </div>
       )}
     </div>

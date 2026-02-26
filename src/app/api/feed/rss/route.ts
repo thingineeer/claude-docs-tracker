@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLatestChanges } from '@/db/queries';
+import { apiInternalError } from '@/lib/api-error';
 
 export async function GET() {
   try {
@@ -35,13 +36,11 @@ ${items}
       headers: {
         'Content-Type': 'application/rss+xml; charset=utf-8',
         'Cache-Control': 'public, max-age=3600',
+        'Access-Control-Allow-Origin': '*',
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 },
-    );
+    return apiInternalError(error);
   }
 }
 

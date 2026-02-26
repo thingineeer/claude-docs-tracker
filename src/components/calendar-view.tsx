@@ -29,13 +29,18 @@ function CalendarViewInner() {
   const { currentYear, currentMonth } = useMemo(() => {
     if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
       const [y, m] = monthParam.split('-').map(Number);
-      if (y >= 2020 && y <= 2099 && m >= 1 && m <= 12) {
+      if (y >= 2024 && y <= 2100 && m >= 1 && m <= 12) {
         return { currentYear: y, currentMonth: m };
       }
     }
     const now = new Date();
     return { currentYear: now.getFullYear(), currentMonth: now.getMonth() + 1 };
   }, [monthParam]);
+
+  const isCurrentMonth = useMemo(() => {
+    const now = new Date();
+    return currentYear === now.getFullYear() && currentMonth === now.getMonth() + 1;
+  }, [currentYear, currentMonth]);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(today);
   const [activeCategories, setActiveCategories] = useState<Set<string>>(
@@ -47,18 +52,21 @@ function CalendarViewInner() {
 
   useEffect(() => {
     let cancelled = false;
+    const fetchYear = currentYear;
+    const fetchMonth = currentMonth;
 
     async function fetchCalendarData() {
       setLoading(true);
       setError(null);
 
       try {
-        const res = await fetch(`/api/calendar?year=${currentYear}&month=${currentMonth}`);
+        const res = await fetch(`/api/calendar?year=${fetchYear}&month=${fetchMonth}`);
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
         }
         const data: CalendarApiResponse = await res.json();
-        if (!cancelled) {
+        // Only update state if this request is still for the current month
+        if (!cancelled && data.year === fetchYear && data.month === fetchMonth) {
           setCalendarData(data.days);
         }
       } catch {
@@ -80,11 +88,19 @@ function CalendarViewInner() {
 
   const handleMonthChange = useCallback(
     (year: number, month: number) => {
+      setSelectedDate(null);
       const monthStr = `${year}-${String(month).padStart(2, '0')}`;
       router.push(`/calendar?month=${monthStr}`);
     },
     [router],
   );
+
+  const handleGoToToday = useCallback(() => {
+    const now = new Date();
+    const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    router.push(`/calendar?month=${monthStr}`);
+    setSelectedDate(format(now, 'yyyy-MM-dd'));
+  }, [router]);
 
   const handleSelectDate = useCallback((date: string) => {
     setSelectedDate(date);
@@ -118,38 +134,73 @@ function CalendarViewInner() {
 
   return (
     <div className="space-y-4">
-      {loading ? (
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: 35 }, (_, i) => (
-            <div
-              key={i}
-              className="h-20 rounded bg-gray-100 dark:bg-gray-800 animate-pulse"
-            />
-          ))}
+      {/* Go to today button when viewing a different month */}
+      {!isCurrentMonth && (
+        <div className="flex justify-end">
+          <button
+            onClick={handleGoToToday}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border hover:border-accent hover:text-accent transition-colors"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="2" y="3" width="12" height="11" rx="1.5" />
+              <path d="M2 7h12" />
+              <path d="M5 1.5v3M11 1.5v3" />
+              <circle cx="8" cy="10.5" r="1" fill="currentColor" stroke="none" />
+            </svg>
+            Go to today
+          </button>
         </div>
-      ) : (
-        <CalendarGrid
-          year={currentYear}
-          month={currentMonth}
-          data={calendarData}
-          selectedDate={selectedDate}
-          onDateSelect={handleSelectDate}
-          onMonthChange={handleMonthChange}
-          activeCategories={activeCategories}
-        />
       )}
 
-      <CategoryLegend
-        activeCategories={activeCategories}
-        onToggle={handleToggleCategory}
-      />
+      {/* Desktop: sidebar layout; Mobile: stacked layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
+        {/* Left column: calendar + legend */}
+        <div className="space-y-4">
+          {loading ? (
+            <div className="grid grid-cols-7 gap-1">
+              {Array.from({ length: 35 }, (_, i) => (
+                <div
+                  key={i}
+                  className="h-20 rounded bg-gray-100 dark:bg-gray-800 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <CalendarGrid
+              year={currentYear}
+              month={currentMonth}
+              data={calendarData}
+              selectedDate={selectedDate}
+              onDateSelect={handleSelectDate}
+              onMonthChange={handleMonthChange}
+              activeCategories={activeCategories}
+            />
+          )}
 
-      {selectedDate && (
-        <DayDetail
-          date={selectedDate}
-          activeCategories={activeCategories}
-        />
-      )}
+          <CategoryLegend
+            activeCategories={activeCategories}
+            onToggle={handleToggleCategory}
+          />
+        </div>
+
+        {/* Right column (desktop sidebar) / below calendar (mobile) */}
+        {selectedDate && (
+          <div className="rounded-xl border border-border bg-surface/30 p-5 lg:sticky lg:top-24 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
+            <DayDetail
+              date={selectedDate}
+              activeCategories={activeCategories}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getPageHistory } from '@/db/queries';
+import { apiInternalError } from '@/lib/api-error';
 
 export async function GET(
   _request: Request,
@@ -11,9 +12,6 @@ export async function GET(
     const history = await getPageHistory(pageId);
     return NextResponse.json({ pageId, history });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
-      { status: 500 },
-    );
+    return apiInternalError(error);
   }
 }

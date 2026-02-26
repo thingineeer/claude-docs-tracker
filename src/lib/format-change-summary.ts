@@ -1,10 +1,10 @@
 import type { ChangeType } from '@/db/types';
 
 const FALLBACK_LABELS: Record<ChangeType, string> = {
-  added: '새 페이지 추가됨',
-  modified: '내용 업데이트됨',
-  removed: '페이지 제거됨',
-  sidebar_changed: '사이드바 구조 변경',
+  added: 'New page added',
+  modified: 'Content updated',
+  removed: 'Page removed',
+  sidebar_changed: 'Sidebar structure changed',
 };
 
 function truncate(text: string, maxLength: number): string {

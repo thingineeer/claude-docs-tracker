@@ -12,7 +12,7 @@ export default function CalendarPage() {
       <section className="pt-4 pb-2">
         <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
         <p className="text-muted text-sm mt-1">
-          Browse documentation changes by date. Click any day to see details.
+          Browse documentation changes by date
         </p>
       </section>
       <CalendarView />

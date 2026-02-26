@@ -1,3 +1,5 @@
+import { RATE_LIMIT_MS, MAX_RETRIES, USER_AGENT } from './config';
+
 export interface CrawlResult {
   url: string;
   title: string;
@@ -12,11 +14,16 @@ export interface SidebarNode {
   children?: SidebarNode[];
 }
 
-const RATE_LIMIT_MS = 2000;
-const MAX_RETRIES = 3;
+export const CRAWL_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function createTimeoutPromise(ms: number): Promise<never> {
+  return new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Crawl timeout exceeded: ${ms}ms`)), ms),
+  );
 }
 
 export async function crawlPage(url: string, retries = MAX_RETRIES): Promise<CrawlResult> {
@@ -24,7 +31,7 @@ export async function crawlPage(url: string, retries = MAX_RETRIES): Promise<Cra
     try {
       const response = await fetch(url, {
         headers: {
-          'User-Agent': 'claude-docs-tracker/1.0 (https://github.com/thingineeer/claude-docs-tracker)',
+          'User-Agent': USER_AGENT,
           Accept: 'text/html,application/xhtml+xml',
         },
       });
@@ -65,21 +72,25 @@ export async function crawlPages(
 ): Promise<CrawlResult[]> {
   const results: CrawlResult[] = [];
 
-  for (let i = 0; i < urls.length; i++) {
-    try {
-      const result = await crawlPage(urls[i]);
-      results.push(result);
-      onProgress?.(i + 1, urls.length);
-    } catch (error) {
-      console.error(`Skipping ${urls[i]}:`, error);
+  const crawlPromise = (async () => {
+    for (let i = 0; i < urls.length; i++) {
+      try {
+        const result = await crawlPage(urls[i]);
+        results.push(result);
+        onProgress?.(i + 1, urls.length);
+      } catch (error) {
+        console.error(`Skipping ${urls[i]}:`, error);
+      }
+
+      if (i < urls.length - 1) {
+        await sleep(RATE_LIMIT_MS);
+      }
     }
 
-    if (i < urls.length - 1) {
-      await sleep(RATE_LIMIT_MS);
-    }
-  }
+    return results;
+  })();
 
-  return results;
+  return Promise.race([crawlPromise, createTimeoutPromise(CRAWL_TIMEOUT_MS)]);
 }
 
 export function extractTitle(html: string): string {

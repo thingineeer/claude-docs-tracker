@@ -1,6 +1,14 @@
 import { getSupabaseAdmin } from './supabase';
 import type { ChangeType } from './types';
 
+/**
+ * Escapes special LIKE characters in SQL patterns.
+ * Prevents '%' and '_' from being interpreted as wildcards.
+ */
+function escapeLikePattern(query: string): string {
+  return query.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
 export async function upsertPage(page: {
   url: string;
   domain: string;
@@ -133,10 +141,12 @@ export async function getRecentReports(days = 7) {
 }
 
 export async function searchChanges(query: string, limit = 50) {
+  const escapedQuery = escapeLikePattern(query);
+
   const { data, error } = await getSupabaseAdmin()
     .from('changes')
     .select('*, pages!inner(*)')
-    .or(`diff_summary.ilike.%${query}%,pages.title.ilike.%${query}%`)
+    .or(`diff_summary.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%`)
     .order('detected_at', { ascending: false })
     .limit(limit);
 
@@ -145,7 +155,7 @@ export async function searchChanges(query: string, limit = 50) {
     const { data: fallbackData, error: fallbackError } = await getSupabaseAdmin()
       .from('changes')
       .select('*, pages(*)')
-      .ilike('diff_summary', `%${query}%`)
+      .ilike('diff_summary', `%${escapedQuery}%`)
       .order('detected_at', { ascending: false })
       .limit(limit);
 
@@ -235,15 +245,5 @@ export async function getRecentChangeCounts(days = 7) {
   return dates.map((date) => ({ date, count: countMap[date] ?? 0 }));
 }
 
-export function getCategoryFromPage(domain: string, section: string | null): string {
-  if (domain === 'code.claude.com') {
-    if (section === 'overview' || section === 'quickstart') return 'platform-docs';
-    if (section === 'mcp') return 'agent-tools';
-    if (section === 'changelog') return 'release-notes';
-    return 'claude-code';
-  }
-  if (section === 'release-notes') return 'release-notes';
-  if (section && ['agent-sdk', 'agents-and-tools'].includes(section)) return 'agent-tools';
-  // Everything else on platform is now 'platform-docs'
-  return 'platform-docs';
-}
+// Re-export getCategoryForPage as getCategoryFromPage for backward compatibility
+export { getCategoryForPage as getCategoryFromPage } from '@/lib/categories';
