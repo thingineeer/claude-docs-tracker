@@ -5,6 +5,7 @@ export interface Page {
   url: string;
   domain: string;
   section: string | null;
+  category: string | null;
   title: string;
   last_crawled_at: string | null;
   created_at: string;
