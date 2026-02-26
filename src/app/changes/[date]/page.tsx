@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { format, subDays, addDays } from 'date-fns';
 import { getChangesByDate, getDailyReport } from '@/db/queries';
 import { ChangeCard } from '@/components/change-card';
+import { DateNav } from '@/components/date-nav';
 import type { ChangeType } from '@/db/types';
 
 export const revalidate = 86400;
@@ -33,19 +33,12 @@ export default async function ChangesDatePage({ params }: PageProps) {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <Link href={`/changes/${prevDate}`} className="text-sm text-accent hover:underline">
-          &larr; {prevDate}
-        </Link>
-        <h1 className="text-2xl font-bold">{date}</h1>
-        {!isToday ? (
-          <Link href={`/changes/${nextDate}`} className="text-sm text-accent hover:underline">
-            {nextDate} &rarr;
-          </Link>
-        ) : (
-          <span className="text-sm text-muted">Today</span>
-        )}
-      </div>
+      <DateNav
+        currentDate={date}
+        prevDate={prevDate}
+        nextDate={nextDate}
+        isToday={isToday}
+      />
 
       {report?.ai_summary && (
         <section className="rounded-lg border border-accent/30 bg-accent/5 p-4">
