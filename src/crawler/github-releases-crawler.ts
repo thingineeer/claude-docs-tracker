@@ -20,40 +20,61 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function fetchGitHubReleases(): Promise<GitHubRelease[]> {
-  const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/releases?per_page=${GITHUB_RELEASES_PER_PAGE}`;
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    console.warn('[github] GITHUB_TOKEN not set — using unauthenticated rate limit (60 req/hr)');
+  }
+
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github.v3+json',
   };
 
-  const token = process.env.GITHUB_TOKEN;
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    try {
-      const response = await fetch(url, { headers });
+  const allReleases: GitHubRelease[] = [];
+  const maxPages = 10;
 
-      const remaining = response.headers.get('X-RateLimit-Remaining');
-      const limit = response.headers.get('X-RateLimit-Limit');
-      console.log(`[github] Rate limit: ${remaining}/${limit}`);
+  for (let page = 1; page <= maxPages; page++) {
+    const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/releases?per_page=${GITHUB_RELEASES_PER_PAGE}&page=${page}`;
 
-      if (!response.ok) {
-        throw new Error(`GitHub API ${response.status}: ${response.statusText}`);
+    let releases: GitHubRelease[] | null = null;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const response = await fetch(url, { headers });
+
+        const remaining = response.headers.get('X-RateLimit-Remaining');
+        const limit = response.headers.get('X-RateLimit-Limit');
+        console.log(`[github] Page ${page} — Rate limit: ${remaining}/${limit}`);
+
+        if (!response.ok) {
+          throw new Error(`GitHub API ${response.status}: ${response.statusText}`);
+        }
+
+        releases = await response.json();
+        break;
+      } catch (error) {
+        console.warn(`[github] Page ${page}, attempt ${attempt}/${MAX_RETRIES} failed:`, error);
+        if (attempt === MAX_RETRIES) {
+          throw error;
+        }
+        await sleep(1000 * Math.pow(2, attempt - 1));
       }
-
-      const releases: GitHubRelease[] = await response.json();
-      return releases.filter((r) => !r.draft);
-    } catch (error) {
-      console.warn(`[github] Attempt ${attempt}/${MAX_RETRIES} failed:`, error);
-      if (attempt === MAX_RETRIES) {
-        throw error;
-      }
-      await sleep(1000 * Math.pow(2, attempt - 1));
     }
+
+    if (!releases || releases.length === 0) break;
+
+    const nonDraftReleases = releases.filter((r) => !r.draft);
+    allReleases.push(...nonDraftReleases);
+
+    if (releases.length < GITHUB_RELEASES_PER_PAGE) break; // last page
+
+    if (page < maxPages) await sleep(1000); // rate limit delay
   }
 
-  throw new Error('Unreachable: fetchGitHubReleases');
+  return allReleases;
 }
 
 export function releaseToCrawlResult(release: GitHubRelease): CrawlResult {

@@ -68,7 +68,7 @@ describe('GitHub category classification', () => {
 });
 
 describe('fetchGitHubReleases', () => {
-  it('filters out draft releases', async () => {
+  it('filters out draft releases with pagination', async () => {
     const mockReleases = [
       makeRelease({ id: 1, tag_name: 'v2.1.62', draft: false }),
       makeRelease({ id: 2, tag_name: 'v2.1.63-rc1', draft: true }),
@@ -76,6 +76,7 @@ describe('fetchGitHubReleases', () => {
     ];
 
     const originalFetch = global.fetch;
+    // Page 1 returns releases (< per_page, so pagination stops)
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
       headers: new Map([
@@ -85,15 +86,112 @@ describe('fetchGitHubReleases', () => {
       json: () => Promise.resolve(mockReleases),
     });
 
-    // Dynamic import to use the mocked fetch
     const { fetchGitHubReleases } = await import('@/crawler/github-releases-crawler');
     const releases = await fetchGitHubReleases();
 
     expect(releases).toHaveLength(2);
     expect(releases.every((r) => !r.draft)).toBe(true);
     expect(releases.map((r) => r.tag_name)).toEqual(['v2.1.62', 'v2.1.61']);
+    // Only one fetch call since 3 < GITHUB_RELEASES_PER_PAGE (100)
+    expect(global.fetch).toHaveBeenCalledTimes(1);
 
     global.fetch = originalFetch;
+  });
+
+  it('paginates through multiple pages until empty response', async () => {
+    const page1Releases = Array.from({ length: 100 }, (_, i) =>
+      makeRelease({ id: i + 1, tag_name: `v1.0.${i}`, draft: false }),
+    );
+    const page2Releases = [
+      makeRelease({ id: 101, tag_name: 'v0.9.0', draft: false }),
+      makeRelease({ id: 102, tag_name: 'v0.8.0', draft: true }),
+    ];
+
+    const originalFetch = global.fetch;
+    let callCount = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      callCount++;
+      const data = callCount === 1 ? page1Releases : page2Releases;
+      return Promise.resolve({
+        ok: true,
+        headers: new Map([
+          ['X-RateLimit-Remaining', '58'],
+          ['X-RateLimit-Limit', '60'],
+        ]),
+        json: () => Promise.resolve(data),
+      });
+    });
+
+    const { fetchGitHubReleases } = await import('@/crawler/github-releases-crawler');
+    const releases = await fetchGitHubReleases();
+
+    // 100 from page 1 + 1 non-draft from page 2
+    expect(releases).toHaveLength(101);
+    expect(releases.every((r) => !r.draft)).toBe(true);
+    // 2 fetch calls: page 1 (100 items) + page 2 (2 items, < 100 so stops)
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    global.fetch = originalFetch;
+  });
+
+  it('stops at empty page response', async () => {
+    const page1Releases = Array.from({ length: 100 }, (_, i) =>
+      makeRelease({ id: i + 1, tag_name: `v1.0.${i}`, draft: false }),
+    );
+
+    const originalFetch = global.fetch;
+    let callCount = 0;
+    global.fetch = jest.fn().mockImplementation(() => {
+      callCount++;
+      const data = callCount === 1 ? page1Releases : [];
+      return Promise.resolve({
+        ok: true,
+        headers: new Map([
+          ['X-RateLimit-Remaining', '58'],
+          ['X-RateLimit-Limit', '60'],
+        ]),
+        json: () => Promise.resolve(data),
+      });
+    });
+
+    const { fetchGitHubReleases } = await import('@/crawler/github-releases-crawler');
+    const releases = await fetchGitHubReleases();
+
+    expect(releases).toHaveLength(100);
+    // 2 fetch calls: page 1 (100 items) + page 2 (empty, stops)
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    global.fetch = originalFetch;
+  });
+
+  it('warns when GITHUB_TOKEN is not set', async () => {
+    const originalFetch = global.fetch;
+    const originalToken = process.env.GITHUB_TOKEN;
+    delete process.env.GITHUB_TOKEN;
+
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      headers: new Map([
+        ['X-RateLimit-Remaining', '59'],
+        ['X-RateLimit-Limit', '60'],
+      ]),
+      json: () => Promise.resolve([]),
+    });
+
+    const { fetchGitHubReleases } = await import('@/crawler/github-releases-crawler');
+    await fetchGitHubReleases();
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      '[github] GITHUB_TOKEN not set — using unauthenticated rate limit (60 req/hr)',
+    );
+
+    warnSpy.mockRestore();
+    global.fetch = originalFetch;
+    if (originalToken !== undefined) {
+      process.env.GITHUB_TOKEN = originalToken;
+    }
   });
 });
 
