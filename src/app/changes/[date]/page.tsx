@@ -19,9 +19,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { date } = await params;
   return {
     title: `Changes on ${date}`,
-    description: `Documentation changes detected on ${date} - Claude Docs Tracker`,
+    description: `Documentation changes detected on ${date} - Claude Patch Notes`,
     openGraph: {
-      title: `Changes on ${date} - Claude Docs Tracker`,
+      title: `Changes on ${date} | Claude Patch Notes`,
       description: `Documentation changes detected on ${date}`,
     },
   };

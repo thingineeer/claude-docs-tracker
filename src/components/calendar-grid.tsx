@@ -140,13 +140,13 @@ export function CalendarGrid({
               key={dateStr}
               onClick={() => onDateSelect(dateStr)}
               className={`
-                relative flex flex-col items-center justify-start
+                group relative flex flex-col items-center justify-start
                 p-1 sm:p-2 min-h-[80px] md:min-h-[100px]
-                rounded-lg transition-colors cursor-pointer
+                rounded-lg transition-all duration-200 cursor-pointer
                 ${!inMonth ? 'opacity-30' : ''}
                 ${today && !selected ? 'bg-accent/10 border-2 border-accent rounded-lg' : ''}
                 ${selected ? 'ring-2 ring-accent bg-surface' : ''}
-                ${!selected && !today ? 'hover:bg-surface/50' : ''}
+                ${!selected && !today ? 'hover:bg-surface/70' : ''}
               `}
             >
               {/* Date number */}
@@ -167,7 +167,7 @@ export function CalendarGrid({
                   {dots.slice(0, MAX_DOTS).map((cat) => (
                     <span
                       key={cat}
-                      className="w-2 h-2 rounded-full"
+                      className="w-2 h-2 rounded-full transition-all duration-200 group-hover:w-2.5 group-hover:h-2.5"
                       style={{ backgroundColor: CATEGORIES[cat].dotColor }}
                       title={CATEGORIES[cat].name}
                     />

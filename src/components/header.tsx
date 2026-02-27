@@ -74,7 +74,7 @@ export function Header() {
                 <path d="M12 2l2.09 6.26L20.18 10l-6.09 1.74L12 18l-2.09-6.26L3.82 10l6.09-1.74L12 2z" />
                 <path d="M18 14l1.05 3.15L22.18 18.5l-3.13.85L18 22.5l-1.05-3.15L13.82 18.5l3.13-.85L18 14z" opacity="0.6" />
               </svg>
-              <span>Claude Docs Tracker</span>
+              <span>Claude Patch Notes</span>
             </Link>
 
             {/* Desktop nav */}

@@ -49,7 +49,7 @@ export function TimelineBar({ data }: TimelineBarProps) {
             <button
               key={item.date}
               onClick={() => router.push(`/changes/${item.date}`)}
-              className="flex flex-col items-center gap-1.5 group"
+              className="flex flex-col items-center gap-1.5 group cursor-pointer"
               title={tooltipText}
             >
               {/* Dot */}
@@ -57,7 +57,7 @@ export function TimelineBar({ data }: TimelineBarProps) {
                 className={`
                   rounded-full flex items-center justify-center
                   transition-all duration-200
-                  group-hover:scale-110 group-hover:shadow-md
+                  group-hover:scale-[1.15] group-hover:shadow-md
                   ${today ? 'ring-2 ring-accent ring-offset-2 ring-offset-background dot-today-pulse' : ''}
                 `}
                 style={{

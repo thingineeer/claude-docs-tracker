@@ -153,11 +153,11 @@ export async function searchChanges(query: string, limit = 50) {
     .limit(limit);
 
   if (error) {
-    // Fallback: search only in diff_summary if foreign table filter fails
+    // Fallback: search without !inner join if foreign table filter fails
     const { data: fallbackData, error: fallbackError } = await getSupabaseAdmin()
       .from('changes')
       .select('*, pages(*)')
-      .or(`diff_summary.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
+      .or(`diff_summary.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
       .order('detected_at', { ascending: false })
       .limit(limit);
 
@@ -274,27 +274,51 @@ export async function getLatestSnapshotForPage(pageId: string) {
   return data;
 }
 
-export async function getRecentPageTitles(limit = 5): Promise<string[]> {
+export async function getSearchSuggestions(limit = 5): Promise<string[]> {
   const { data, error } = await getSupabaseAdmin()
     .from('changes')
-    .select('pages(title)')
+    .select('diff_summary, pages(title)')
     .order('detected_at', { ascending: false })
-    .limit(limit * 2);
+    .limit(30);
 
-  if (error) return [];
+  if (error || !data || data.length === 0) return [];
 
-  const titles = new Set<string>();
-  for (const row of data ?? []) {
-    const page = row.pages as any;
-    if (page?.title && titles.size < limit) {
-      const shortTitle = page.title.split(/[—\-:|]/)[0].trim();
-      if (shortTitle.length <= 30) {
-        titles.add(shortTitle);
+  // Extract meaningful keywords from diff_summary and page titles
+  const wordCounts = new Map<string, number>();
+  const stopWords = new Set([
+    'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for',
+    'of', 'with', 'by', 'from', 'is', 'was', 'are', 'were', 'be', 'been',
+    'has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+    'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those',
+    'it', 'its', 'not', 'no', 'as', 'if', 'then', 'than', 'so', 'up',
+    'about', 'into', 'over', 'after', 'new', 'added', 'removed', 'updated',
+    'changed', 'modified', 'section', 'page', 'content', 'text', 'also',
+  ]);
+
+  for (const row of data) {
+    const sources = [
+      row.diff_summary,
+      (row.pages as any)?.title,
+    ].filter(Boolean) as string[];
+
+    for (const text of sources) {
+      const words = text.split(/[\s,;:.()\[\]{}|/\\]+/);
+      for (const raw of words) {
+        const word = raw.replace(/[^a-zA-Z0-9-]/g, '');
+        if (word.length < 3 || stopWords.has(word.toLowerCase())) continue;
+        const key = word.length <= 5 ? word.toUpperCase() : word;
+        wordCounts.set(key, (wordCounts.get(key) ?? 0) + 1);
       }
     }
   }
 
-  return Array.from(titles);
+  // Sort by frequency and return top keywords
+  const sorted = [...wordCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([word]) => word)
+    .slice(0, limit);
+
+  return sorted;
 }
 
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility

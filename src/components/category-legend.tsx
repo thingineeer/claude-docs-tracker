@@ -19,14 +19,17 @@ export function CategoryLegend({ activeCategories, onToggle }: CategoryLegendPro
           <button
             key={cat}
             onClick={() => onToggle(cat)}
+            title={config.description}
             className={`
-              inline-flex items-center gap-1.5 px-3 py-1.5
-              rounded-full border border-border
+              inline-flex items-center gap-1.5 px-3 py-2
+              rounded-full border
               text-xs font-medium
-              transition-all
-              hover:border-accent/50
-              ${active ? 'opacity-100' : 'opacity-30'}
+              transition-all duration-200
+              ${active
+                ? 'opacity-100 border-border hover:border-accent/50'
+                : 'opacity-40 border-border/50 line-through decoration-muted/40'}
             `}
+            style={active ? { backgroundColor: `${config.color}10` } : undefined}
           >
             <span
               className="w-2 h-2 rounded-full shrink-0"

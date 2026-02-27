@@ -17,22 +17,22 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Claude Docs Tracker',
-    template: '%s - Claude Docs Tracker',
+    default: 'Claude Patch Notes',
+    template: '%s | Claude Patch Notes',
   },
-  description: 'Daily documentation change tracker for Claude API, Claude Code, and Claude Apps',
+  description: 'Every change to Claude\'s docs — including the silent ones',
   openGraph: {
-    title: 'Claude Docs Tracker',
-    description: 'Daily documentation change tracker for Claude API, Claude Code, and Claude Apps',
+    title: 'Claude Patch Notes',
+    description: 'Every change to Claude\'s docs — including the silent ones',
     url: 'https://claude-docs-tracker.vercel.app',
-    siteName: 'Claude Docs Tracker',
+    siteName: 'Claude Patch Notes',
     type: 'website',
     locale: 'en_US',
   },
   twitter: {
     card: 'summary',
-    title: 'Claude Docs Tracker',
-    description: 'Daily documentation change tracker for Claude API, Claude Code, and Claude Apps',
+    title: 'Claude Patch Notes',
+    description: 'Every change to Claude\'s docs — including the silent ones',
   },
   metadataBase: new URL('https://claude-docs-tracker.vercel.app'),
 };

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { DiffView } from './diff-view';
-import { CategoryIcon } from '@/lib/category-icons';
 import { getCategoryForPage, CATEGORIES } from '@/lib/categories';
 import type { ChangeType } from '@/db/types';
 
@@ -94,74 +93,68 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
   })();
 
   return (
-    <div className="rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/30 hover:shadow-sm transition-all p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          {/* Category chip */}
-          <div className="flex items-center gap-2 mb-2">
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium"
-              style={{
-                backgroundColor: `${categoryConfig.color}14`,
-                color: categoryConfig.color,
-              }}
-            >
-              <CategoryIcon category={categoryType} className="w-3 h-3" />
-              {categoryConfig.name}
-            </span>
-          </div>
+    <div className="rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/20 transition-all duration-200 p-4">
+      {/* Row 1: category dot + title + time */}
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className="w-2 h-2 rounded-full shrink-0"
+          style={{ backgroundColor: categoryConfig.color }}
+          title={categoryConfig.name}
+        />
+        <h3 className="font-medium truncate flex-1 min-w-0">{highlightedTitle ?? title}</h3>
+        <span className="text-xs text-muted shrink-0" title={detectedAt}>{relativeTime}</span>
+      </div>
 
-          {/* Badge + relative time */}
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.color}`}>
-              <span className="mr-1 font-mono">{config.icon}</span>
-              {config.label}
-            </span>
-            {isBreaking && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-600 text-white">
-                Breaking
-              </span>
-            )}
-            {isSilent && (
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                Silent Change
-              </span>
-            )}
-            <span className="text-xs text-muted" title={detectedAt}>{relativeTime}</span>
-          </div>
+      {/* Row 2: shortened url */}
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm text-muted hover:text-accent truncate block ml-4"
+        title={url}
+      >
+        {shortenUrl(url)}
+      </a>
 
-          <h3 className="font-medium truncate">{highlightedTitle ?? title}</h3>
-          <a
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-muted hover:text-accent truncate block"
-            title={url}
-          >
-            {shortenUrl(url)}
-          </a>
-          {(highlightedSummary || summary) && (
-            <p className="text-sm text-muted mt-2">{highlightedSummary ?? summary}</p>
-          )}
-        </div>
+      {/* Row 3: summary */}
+      {(highlightedSummary || summary) && (
+        <p className="text-sm text-muted mt-1 ml-4 line-clamp-1">{highlightedSummary ?? summary}</p>
+      )}
 
+      {/* Row 4: change type + badges + show diff */}
+      <div className="flex items-center gap-2 mt-2 ml-4 flex-wrap">
+        <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${config.color}`}>
+          <span className="mr-0.5 font-mono">{config.icon}</span>
+          {config.label}
+        </span>
+        {isBreaking && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-600 text-white">
+            Breaking
+          </span>
+        )}
+        {isSilent && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            Silent
+          </span>
+        )}
         {diffHtml && (
           <button
             onClick={() => setShowDiff(!showDiff)}
             aria-expanded={showDiff}
             aria-label={showDiff ? 'Hide diff view' : 'Show diff view'}
-            className="shrink-0 text-sm text-[var(--muted)] hover:text-[var(--foreground)] border border-[var(--border)] rounded-lg px-3 py-1.5 hover:bg-[var(--surface)] transition-all"
+            className="text-xs text-[var(--accent)] hover:underline transition-colors ml-auto"
           >
-            {showDiff ? 'Hide Diff' : 'Show Diff'}
+            {showDiff ? 'Hide diff' : 'Show diff \u2192'}
           </button>
         )}
       </div>
 
-      {showDiff && diffHtml && (
-        <div className="mt-3">
-          <DiffView diffHtml={diffHtml} />
-        </div>
-      )}
+      {/* Diff expand with transition */}
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-in-out ${showDiff && diffHtml ? 'max-h-[2000px] opacity-100 mt-3' : 'max-h-0 opacity-0'}`}
+      >
+        {diffHtml && <DiffView diffHtml={diffHtml} />}
+      </div>
     </div>
   );
 }

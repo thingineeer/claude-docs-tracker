@@ -122,16 +122,15 @@ claude-docs-tracker/
 └── README.md             # 프로젝트 소개
 ```
 
-## 현재 상태 요약 (2026-02-27, v3.0)
+## 현재 상태 요약 (2026-02-27, v4.0)
 
+- 브랜드: Claude Patch Notes (repo: claude-docs-tracker)
 - 네비: Home / Calendar / Search (3개)
 - 카테고리: platform-docs / claude-code / agents-mcp / release-notes (4개, SVG 아이콘)
-- 홈페이지: 인라인 스탯 + Activity Dot Strip + Recent Changes
-- DB: 147 pages, changes 테이블에 is_silent + is_breaking 플래그 추가
-- Silent Change 감지: release-notes 아닌 변경 자동 태깅
-- Breaking Change 감지: diff 추가분 키워드 스캔 (12개 키워드)
-- 주간 다이제스트: 매주 월 09:00 UTC 크론, 변경 없으면 스킵
-- Public API v1: /api/v1/changes, /pages, /stats (CORS, 캐시)
+- 홈페이지: Apple-level UX (font-semibold, 컬러 도트 카드, smooth animations)
+- DB: 147 pages, changes 테이블에 is_silent + is_breaking 플래그
+- 검색: 키워드 빈도 기반 추천 칩, fallback 검색에 title 포함
+- README: showcase 전용 (setup/contributing 제거)
 - Webhook: breaking change 시 Discord/Slack 즉시 알림
 - 검색 칩: 동적 생성 (/api/changes/suggestions)
 - 크롤러: diff_summary AI 요약 + breaking 감지 + silent 태깅 자동

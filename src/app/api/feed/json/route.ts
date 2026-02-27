@@ -9,7 +9,7 @@ export async function GET() {
 
     const feed = {
       version: 'https://jsonfeed.org/version/1.1',
-      title: 'Claude Docs Tracker',
+      title: 'Claude Patch Notes',
       home_page_url: siteUrl,
       feed_url: `${siteUrl}/api/feed/json`,
       description: 'Daily changes in Claude official documentation',

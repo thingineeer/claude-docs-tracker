@@ -45,7 +45,7 @@ async function sendDiscordNotification(result: PipelineResult): Promise<void> {
   const today = new Date().toISOString().split('T')[0];
 
   const embed = {
-    title: 'Claude Docs Tracker - Daily Update',
+    title: 'Claude Patch Notes - Daily Update',
     url: `${siteUrl}/changes/${today}`,
     color: 0xd97757,
     fields: [
@@ -74,7 +74,7 @@ async function sendSlackNotification(result: PipelineResult): Promise<void> {
     blocks: [
       {
         type: 'header',
-        text: { type: 'plain_text', text: 'Claude Docs Tracker - Daily Update' },
+        text: { type: 'plain_text', text: 'Claude Patch Notes - Daily Update' },
       },
       {
         type: 'section',

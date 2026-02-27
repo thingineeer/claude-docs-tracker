@@ -23,7 +23,7 @@ export async function GET() {
     const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Claude Docs Tracker</title>
+    <title>Claude Patch Notes</title>
     <link>${siteUrl}</link>
     <description>Daily changes in Claude official documentation</description>
     <language>en</language>

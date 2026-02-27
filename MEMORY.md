@@ -5,11 +5,11 @@
 
 ## 프로젝트 정보
 
-- **이름**: claude-docs-tracker
+- **이름**: Claude Patch Notes (repo: claude-docs-tracker)
 - **설명**: Claude 공식 문서의 일일 변경사항을 추적하는 웹 서비스
 - **소유자**: thingineeer
 - **GitHub**: https://github.com/thingineeer/claude-docs-tracker
-- **상태**: v3.0 경쟁사 분석 기반 성장 기능 구현 완료
+- **상태**: v4.0 브랜드 리네이밍 + Apple-level UX 리디자인 완료
 - **Production URL**: https://claude-docs-tracker.vercel.app
 - **라이선스**: MIT
 - **공개 여부**: public 오픈소스 (처음부터)
@@ -41,9 +41,9 @@
 - `/sidebar-diff` — 삭제, 빈 페이지였음
 
 ### 네비게이션
-- 헤더: sparkle 아이콘 + "Claude Docs Tracker" (pill-shaped active nav)
+- 헤더: sparkle 아이콘 + "Claude Patch Notes" (pill-shaped active nav)
 - sticky top-0 backdrop-blur-md, 모바일 md:hidden 햄버거 → 슬라이드 드로어
-- 푸터: 좌측 "Claude Docs Tracker" + GitHub/RSS 아이콘, 우측 "MIT License · Next.js"
+- 푸터: 좌측 "Claude Patch Notes" + GitHub/RSS 아이콘, 우측 "MIT License · Next.js"
 - 글로벌 Cmd+K → /search 포커스 (command-k.tsx)
 
 ### API 라우트
@@ -56,14 +56,14 @@
 - `/api/feed/rss` — RSS 피드
 - `/api/feed/json` — JSON 피드
 
-## 카테고리 시스템 (4개, v2.1)
+## 카테고리 시스템 (4개, v3.0)
 
-| 카테고리 | slug | 매핑 | 색상 | 아이콘 |
+| 카테고리 (표시명) | slug | 매핑 | 색상 | 아이콘 |
 |----------|------|------|------|--------|
 | Platform Docs | `platform-docs` | platform: API, guides, getting-started 등 | #8B5CF6 (purple) | SVG 문서 아이콘 |
-| Claude Code | `claude-code` | code.claude.com 전체 (overview, quickstart 포함) | #3B82F6 (blue) | SVG 터미널 아이콘 |
+| Claude Code Docs | `claude-code` | code.claude.com 전체 (overview, quickstart 포함) | #3B82F6 (blue) | SVG 터미널 아이콘 |
 | Agents & MCP | `agents-mcp` | agent-sdk, agents-and-tools, mcp | #10B981 (green) | SVG 로봇 아이콘 |
-| Release Notes | `release-notes` | platform release-notes + code changelog | #F59E0B (amber) | SVG 스피커 아이콘 |
+| Changelogs | `release-notes` | platform release-notes + code changelog | #F59E0B (amber) | SVG 스피커 아이콘 |
 
 - 아이콘: `src/lib/category-icons.tsx` (커스텀 SVG, 이모지 없음)
 - 분류 로직: `src/lib/categories.ts` (`getCategoryForPage`)
@@ -141,9 +141,9 @@
 - pipeline.ts에서 크롤링 완료 후 자동 호출
 
 ### 검색 추천 칩 동적화
-- `/api/changes/suggestions`: 최근 변경 페이지 타이틀 기반
+- `/api/changes/suggestions`: 키워드 빈도 분석 기반 (getSearchSuggestions)
 - search/page.tsx에서 API 호출, 하드코딩 제거
-- fallback: ['Claude Code', 'API', 'prompt', 'model']
+- fallback: ['API', 'model', 'Claude', 'deprecated']
 
 ## DB 상태
 
@@ -178,6 +178,33 @@
 - RSS/JSON 피드 CORS 헤더 추가
 - HTML 엔티티 디코딩 중복 제거
 - 크롤러 상수 config.ts로 중앙화
+
+## v4.0 Brand + UX Overhaul (2026-02-27)
+
+### 브랜드 리네이밍
+- "Claude Docs Tracker" → "Claude Patch Notes" (전체 앱)
+- layout.tsx metadata, header, footer, page.tsx, RSS/JSON 피드 전부 업데이트
+- URL(claude-docs-tracker.vercel.app)과 내부 slug는 유지
+
+### Apple-level UX 리디자인
+- 홈페이지: font-semibold(not bold), text-2xl md:text-3xl, 스탯 카드 p-3, 아이콘 w-4
+- change-card: 카테고리 칩 → 작은 컬러 도트(w-2 h-2)로 간소화, Show Diff → 텍스트 링크
+- Diff 토글: max-height transition 애니메이션 추가
+- 캘린더 empty state: "The docs were stable on this day" + "View latest changes" 링크
+- day-detail: 카테고리 description 표시, 미니 카드에 좌측 컬러 보더
+- category-legend: 활성 시 bg-{color}/10 배경, 비활성 opacity-40
+- calendar-grid: hover:bg-surface/70 transition 추가
+- 검색: 결과 카운트 pill 뱃지, 빈 상태 개선
+- globals.css: fadeIn/slideUpFadeIn 애니메이션, 다크모드 스크롤바, text-rendering: optimizeLegibility
+
+### 검색 수정
+- searchChanges() fallback에 pages.title 검색 추가
+- getSearchSuggestions(): 키워드 빈도 분석으로 추천 칩 생성 (stopword 필터링)
+- 추천 칩이 실제 결과를 반환하도록 보장
+
+### README 간소화
+- Quick Start, Setup, Contributing, Project Structure, API Usage 섹션 제거
+- 비교 테이블 + Features + Built With + License만 유지 (showcase 전용)
 
 ## 보안 주의사항
 

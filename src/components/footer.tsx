@@ -6,7 +6,7 @@ export function Footer() {
       <div className="mx-auto max-w-6xl px-4 py-6">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-[var(--muted)]">
           <div className="flex items-center gap-4">
-            <span className="font-medium">Claude Docs Tracker</span>
+            <span className="font-medium">Claude Patch Notes</span>
             <a
               href="https://github.com/thingineeer/claude-docs-tracker"
               target="_blank"

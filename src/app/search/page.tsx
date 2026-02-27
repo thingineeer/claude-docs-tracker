@@ -2,6 +2,7 @@
 
 import { Suspense, useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ChangeCard } from '@/components/change-card';
 import type { ChangeType } from '@/db/types';
 
@@ -116,7 +117,7 @@ function SearchContent() {
       </section>
 
       <form onSubmit={handleSubmit}>
-        <div className="relative rounded-xl border border-[var(--border)] focus-within:border-[var(--accent)] bg-[var(--surface)]/30 px-4 py-3 transition-colors">
+        <div className="relative rounded-xl border border-[var(--border)] focus-within:border-[var(--accent)] bg-[var(--surface)]/30 px-4 py-3 transition-all duration-200">
           <div className="flex items-center gap-3">
             <svg
               className="w-5 h-5 text-[var(--muted)] shrink-0"
@@ -171,7 +172,7 @@ function SearchContent() {
       )}
 
       {!loading && searched && results.length === 0 && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/50 p-8 text-center animate-fade-in">
           <svg className="w-10 h-10 text-[var(--muted)]/40 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
@@ -179,6 +180,12 @@ function SearchContent() {
           </svg>
           <p className="text-[var(--muted)] text-sm">
             No results found for &quot;{activeQuery}&quot;
+          </p>
+          <p className="text-[var(--muted)]/60 text-xs mt-2">
+            Try a different keyword or{' '}
+            <Link href="/calendar" className="text-[var(--accent)] hover:underline">
+              browse the calendar
+            </Link>
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
             {suggestionChips.map((chip) => (
@@ -196,22 +203,23 @@ function SearchContent() {
       )}
 
       {!loading && !searched && (
-        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/50 p-8 text-center">
+        <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)]/50 p-8 text-center animate-fade-in">
           <svg className="w-10 h-10 text-[var(--muted)]/40 mx-auto mb-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="11" cy="11" r="8" />
             <path d="M21 21l-4.35-4.35" />
           </svg>
           <p className="text-[var(--muted)] text-sm mb-4">
-            Search for documentation changes by keyword
+            Search across all documentation changes
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             <span className="text-xs text-[var(--muted)]/60 mr-1 self-center">Try:</span>
-            {suggestionChips.map((chip) => (
+            {suggestionChips.map((chip, i) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => handleChipClick(chip)}
-                className="px-3 py-1.5 text-sm rounded-lg border border-[var(--border)] bg-[var(--surface)]/50 text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                className="px-3 py-1.5 text-sm rounded-lg border border-[var(--border)] bg-[var(--surface)]/50 text-[var(--muted)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors animate-slide-up"
+                style={{ animationDelay: `${i * 50}ms`, animationFillMode: 'both' }}
               >
                 {chip}
               </button>
@@ -221,9 +229,12 @@ function SearchContent() {
       )}
 
       {!loading && results.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 animate-fade-in">
           <p className="text-sm text-[var(--muted)]">
-            Found {results.length} change{results.length !== 1 ? 's' : ''} matching &quot;{activeQuery}&quot;
+            <span className="inline-flex items-center bg-[var(--accent)]/10 text-[var(--accent)] text-xs px-2 py-0.5 rounded-full">
+              Found {results.length} result{results.length !== 1 ? 's' : ''}
+            </span>
+            {' '}matching &quot;{activeQuery}&quot;
           </p>
           {results.map((change) => (
             <ChangeCard

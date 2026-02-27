@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
-import { getRecentPageTitles } from '@/db/queries';
+import { getSearchSuggestions } from '@/db/queries';
+
+const FALLBACK_SUGGESTIONS = ['API', 'model', 'Claude', 'deprecated'];
 
 export async function GET() {
-  const suggestions = await getRecentPageTitles(5);
+  const suggestions = await getSearchSuggestions(5);
 
-  // Fallback if no data
   const chips = suggestions.length > 0
     ? suggestions
-    : ['Claude Code', 'API', 'prompt', 'model'];
+    : FALLBACK_SUGGESTIONS;
 
   const response = NextResponse.json({ suggestions: chips });
   response.headers.set('Cache-Control', 'public, s-maxage=3600');

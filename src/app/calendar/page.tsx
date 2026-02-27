@@ -3,7 +3,7 @@ import { CalendarView } from '@/components/calendar-view';
 
 export const metadata: Metadata = {
   title: 'Calendar',
-  description: 'Browse Claude documentation changes by date',
+  description: 'Browse Claude patch notes by date',
 };
 
 export default function CalendarPage() {

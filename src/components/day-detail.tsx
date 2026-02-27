@@ -61,11 +61,28 @@ function EmptyState() {
       </svg>
       <div className="text-center">
         <p className="text-muted text-sm font-medium">
-          No changes on this day
+          No changes detected
         </p>
         <p className="text-muted/60 text-xs mt-1">
-          No documentation changes were detected on this day
+          The docs were stable on this day
         </p>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-xs text-accent hover:text-accent-light transition-colors mt-2"
+        >
+          <svg
+            className="w-3.5 h-3.5"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M13 8H3M7 4L3 8l4 4" />
+          </svg>
+          View latest changes
+        </Link>
       </div>
     </div>
   );
@@ -193,20 +210,22 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
             return (
               <div key={cat}>
                 {/* Category group header */}
-                <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                <h4 className="text-sm font-semibold mb-0.5 flex items-center gap-1.5">
                   <CategoryIcon category={cat} className="w-4 h-4" />
                   <span>{config.name}</span>
                   <span className="text-muted font-normal">
                     ({items.length} {items.length === 1 ? 'change' : 'changes'})
                   </span>
                 </h4>
+                <p className="text-xs text-muted mt-0.5 mb-2">{config.description}</p>
 
                 {/* Change items as mini cards */}
                 <div className="space-y-2 pl-1">
                   {items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex items-start gap-2.5 py-2 px-3 rounded-lg border border-border/50 hover:border-border hover:bg-surface/50 transition-colors"
+                      className="flex items-start gap-2.5 py-2 px-3 rounded-lg border border-border/50 hover:border-border hover:bg-surface/50 transition-colors border-l-2"
+                      style={{ borderLeftColor: config.color }}
                     >
                       {/* Category icon */}
                       <span
@@ -245,14 +264,14 @@ export function DayDetail({ date, activeCategories }: DayDetailProps) {
           })}
 
           {/* View full details link */}
-          <div className="pt-2">
+          <div className="pt-3 border-t border-border/50">
             <Link
               href={`/changes/${date}`}
-              className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:text-accent-light transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent-light transition-all duration-200 group/link"
             >
               View full details
               <svg
-                className="w-4 h-4"
+                className="w-4 h-4 transition-transform duration-200 group-hover/link:translate-x-0.5"
                 viewBox="0 0 16 16"
                 fill="none"
                 stroke="currentColor"
