@@ -27,14 +27,8 @@ async function runMigration() {
   }
   console.log('[0/3] Connection OK\n');
 
-  // Step 1: Add columns via ALTER TABLE
-  console.log('[1/3] Adding is_silent and is_breaking columns ...');
-  const { error: alterErr1 } = await supabase.rpc('exec_sql', {
-    sql: 'ALTER TABLE changes ADD COLUMN IF NOT EXISTS is_silent boolean DEFAULT false;',
-  }).catch(() => ({ error: { message: 'rpc not available' } }));
-
-  // If rpc is not available, try updating a record to verify columns exist
-  // The columns may already exist from running the SQL migration directly
+  // Step 1: Verify columns exist (must be added via SQL migration or Supabase Dashboard)
+  console.log('[1/3] Checking is_silent and is_breaking columns ...');
   const { data: sampleChange, error: sampleErr } = await supabase
     .from('changes')
     .select('id, is_silent, is_breaking')
