@@ -145,16 +145,38 @@
 - search/page.tsx에서 API 호출, 하드코딩 제거
 - fallback: ['API', 'model', 'Claude', 'deprecated']
 
+## GitHub Releases 크롤러 (v4.1, 2026-02-27)
+
+### 기능
+- `src/crawler/github-releases-crawler.ts`: GitHub API로 anthropics/claude-code 릴리즈 크롤링
+- 기존 daily cron pipeline에 통합 (Phase 2)
+- `detected_at`에 `published_at` (실제 릴리즈 날짜) 사용
+- github.com 도메인 → `release-notes` 카테고리 자동 분류
+- 삭제/비공개화 감지 (`detectUnpublishedReleases`)
+
+### 버그 수정 이력
+- **페이지네이션 미구현**: 최초 구현 시 `?per_page=100` 1페이지만 요청 → 100개 이후 릴리즈 누락. page 파라미터 추가하여 최대 10페이지(1000개) 순회하도록 수정
+- **relative time 부정확**: `detected_at`이 날짜만(`YYYY-MM-DD`) 저장되어 `parseISO()`가 자정 UTC로 파싱 → "about 12 hours ago" 표시. `created_at` (정확한 ISO 타임스탬프) 사용하도록 ChangeCard 수정
+- **GITHUB_TOKEN 미설정 경고**: 미인증 시 60 req/hr 제한이므로 경고 로그 추가
+
+### 관련 파일
+- `src/crawler/github-releases-crawler.ts` — 핵심 크롤러
+- `src/crawler/config.ts` — GITHUB_REPO, GITHUB_API_BASE 상수
+- `src/crawler/pipeline.ts` — skipGitHub 옵션, githubReleases 카운트
+- `src/db/queries.ts` — getGitHubReleasePages()
+- `scripts/seed-github-releases.ts` — 초기 데이터 시드 스크립트
+- `.env.example` — GITHUB_TOKEN (optional)
+
 ## DB 상태
 
-- pages: 147개
-- changes: 16개 (초기 크롤링 137건 삭제 후 실제 변경만)
+- pages: 191개 (platform 84 + code 57 + github 50)
+- changes: 16개 + GitHub releases 50건
 - 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename), 005(silent+breaking flags)
 
 ## 빌드 상태
 
 - TypeScript: 0 에러
-- Tests: 89/89 통과 (8 suites)
+- Tests: 101/101 통과 (9 suites)
 - 마지막 확인: 2026-02-27
 
 ## QA 수정 이력 (v1.3.1 — 2026-02-26)
