@@ -26,7 +26,10 @@ export interface ProcessResult {
   error?: string;
 }
 
-export async function processSnapshot(crawlResult: CrawlResult): Promise<ProcessResult> {
+export async function processSnapshot(
+  crawlResult: CrawlResult,
+  options?: { detectedAt?: string },
+): Promise<ProcessResult> {
   try {
     const domain = getDomainFromUrl(crawlResult.url);
     const section = getSectionFromUrl(crawlResult.url);
@@ -67,7 +70,7 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
 
     const isNewPage = !latestSnapshot;
     const changeType: ChangeType = isNewPage ? 'added' : 'modified';
-    const today = new Date().toISOString().split('T')[0];
+    const today = options?.detectedAt ?? new Date().toISOString().split('T')[0];
 
     let diffHtml: string | null = null;
     let sidebarOnlyChange = false;

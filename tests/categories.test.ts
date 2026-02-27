@@ -48,6 +48,12 @@ describe('categories', () => {
       expect(getCategoryForPage('platform.claude.com', 'unknown-section')).toBe('platform-docs');
     });
 
+    it('classifies github.com as release-notes', () => {
+      expect(getCategoryForPage('github.com', 'releases')).toBe('release-notes');
+      expect(getCategoryForPage('github.com', 'claude-code')).toBe('release-notes');
+      expect(getCategoryForPage('github.com', null)).toBe('release-notes');
+    });
+
     it('handles unknown domains', () => {
       expect(getCategoryForPage('support.claude.com', 'some-section')).toBe('platform-docs');
       expect(getCategoryForPage('support.claude.com', null)).toBe('platform-docs');

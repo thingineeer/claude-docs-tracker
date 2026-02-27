@@ -1,6 +1,7 @@
 import { fetchSitemapUrls } from './sitemap-parser';
 import { crawlPages } from './page-crawler';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
+import { processGitHubReleases, detectUnpublishedReleases, fetchGitHubReleases, releaseToCrawlResult } from './github-releases-crawler';
 import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange } from '@/db/queries';
 import { sendBreakingChangeAlert, type BreakingChangeInfo } from '@/lib/notifications';
 
@@ -8,6 +9,7 @@ export interface PipelineOptions {
   dryRun?: boolean;
   maxPages?: number;
   urls?: string[];
+  skipGitHub?: boolean;
 }
 
 export interface PipelineResult {
@@ -18,6 +20,7 @@ export interface PipelineResult {
   removedPages: number;
   unchanged: number;
   errors: number;
+  githubReleases: number;
   results: ProcessResult[];
   breakingChanges?: Array<{
     pageTitle: string;
@@ -28,7 +31,7 @@ export interface PipelineResult {
 }
 
 export async function runPipeline(options: PipelineOptions = {}): Promise<PipelineResult> {
-  const { dryRun = false, maxPages, urls: customUrls } = options;
+  const { dryRun = false, maxPages, urls: customUrls, skipGitHub = false } = options;
 
   console.log('[pipeline] Starting crawl pipeline...');
 
@@ -59,6 +62,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
       removedPages: 0,
       unchanged: 0,
       errors: 0,
+      githubReleases: 0,
       results: [],
     };
   }
@@ -84,6 +88,23 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     }
   }
 
+  // Phase 2: GitHub Releases
+  let githubResults: ProcessResult[] = [];
+  let githubRemovedCount = 0;
+  if (!skipGitHub && !dryRun && !customUrls) {
+    try {
+      console.log('[pipeline] Processing GitHub releases...');
+      githubResults = await processGitHubReleases();
+      const releases = await fetchGitHubReleases();
+      const releaseUrls = releases.map((r) => r.html_url);
+      githubRemovedCount = await detectUnpublishedReleases(releaseUrls);
+    } catch (error) {
+      console.error('[pipeline] GitHub releases phase failed (sitemap results preserved):', error);
+    }
+  }
+
+  const allResults = [...results, ...githubResults];
+
   // Step 4: Detect stale (removed) pages
   let removedCount = 0;
   if (!customUrls) {
@@ -92,14 +113,15 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
 
   // Step 5: Generate daily report
   const summary: PipelineResult = {
-    totalUrls: urls.length,
-    crawled: crawlResults.length,
-    newPages: results.filter((r) => r.status === 'new').length,
-    modifiedPages: results.filter((r) => r.status === 'modified').length,
-    removedPages: removedCount,
-    unchanged: results.filter((r) => r.status === 'unchanged').length,
-    errors: results.filter((r) => r.status === 'error').length,
-    results,
+    totalUrls: urls.length + githubResults.length,
+    crawled: crawlResults.length + githubResults.length,
+    newPages: allResults.filter((r) => r.status === 'new').length,
+    modifiedPages: allResults.filter((r) => r.status === 'modified').length,
+    removedPages: removedCount + githubRemovedCount,
+    unchanged: allResults.filter((r) => r.status === 'unchanged').length,
+    errors: allResults.filter((r) => r.status === 'error').length,
+    githubReleases: githubResults.filter((r) => r.status !== 'unchanged').length,
+    results: allResults,
   };
 
   const today = new Date().toISOString().split('T')[0];
@@ -113,7 +135,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
   });
 
   // Step 6: Check for breaking changes and fire alerts
-  const breakingResults = results.filter(
+  const breakingResults = allResults.filter(
     (r): r is ProcessResult & { isBreaking: true; matchedKeywords: string[] } =>
       'isBreaking' in r && (r as Record<string, unknown>).isBreaking === true,
   );

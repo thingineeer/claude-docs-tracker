@@ -321,5 +321,15 @@ export async function getSearchSuggestions(limit = 5): Promise<string[]> {
   return sorted;
 }
 
+export async function getGitHubReleasePages() {
+  const { data, error } = await getSupabaseAdmin()
+    .from('pages')
+    .select('id, url, domain')
+    .eq('domain', 'github.com');
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility
 export { getCategoryForPage as getCategoryFromPage } from '@/lib/categories';

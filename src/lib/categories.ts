@@ -134,6 +134,11 @@ export function getCategoryForPage(
   domain: string,
   section: string | null,
 ): CategoryType {
+  // github.com: always release-notes
+  if (domain === 'github.com') {
+    return 'release-notes';
+  }
+
   // code.claude.com: default to 'claude-code' unless overridden
   if (domain === 'code.claude.com') {
     if (section && section in CODE_SECTION_MAP) {
