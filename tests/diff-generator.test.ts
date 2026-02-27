@@ -40,6 +40,42 @@ describe('generateInlineDiff', () => {
   });
 });
 
+describe('generateTextDiff for new pages', () => {
+  it('generates added diff when old text is empty', () => {
+    const result = generateTextDiff('', 'New content for the page');
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffHtml).toContain('diff-added');
+    expect(result.diffHtml).toContain('New content for the page');
+    expect(result.addedLines).toBeGreaterThan(0);
+    expect(result.removedLines).toBe(0);
+  });
+
+  it('generates full content as added for multi-line new content', () => {
+    const content = '## What\'s Changed\n\n* Fix: resolved crash\n* Feat: new theme support';
+    const result = generateTextDiff('', content);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffHtml).toContain('diff-added');
+    expect(result.addedLines).toBeGreaterThan(0);
+    expect(result.removedLines).toBe(0);
+  });
+
+  it('marks all lines as added when old text is empty string', () => {
+    const newContent = 'Line 1\nLine 2\nLine 3\n';
+    const result = generateTextDiff('', newContent);
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffHtml).not.toContain('diff-removed');
+    expect(result.addedLines).toBe(3);
+  });
+
+  it('escapes HTML in new page content', () => {
+    const result = generateTextDiff('', '<script>alert("xss")</script>');
+    expect(result.hasChanges).toBe(true);
+    expect(result.diffHtml).toContain('diff-added');
+    expect(result.diffHtml).not.toContain('<script>');
+    expect(result.diffHtml).toContain('&lt;script&gt;');
+  });
+});
+
 describe('generateSidebarDiff', () => {
   it('returns no changes for identical trees', () => {
     const tree = [{ title: 'Home', url: '/home' }];

@@ -148,7 +148,7 @@ export async function searchChanges(query: string, limit = 50) {
   const { data, error } = await getSupabaseAdmin()
     .from('changes')
     .select('*, pages!inner(*)')
-    .or(`diff_summary.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
+    .or(`diff_summary.ilike.%${escapedQuery}%,diff_html.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
     .order('detected_at', { ascending: false })
     .limit(limit);
 
@@ -157,7 +157,7 @@ export async function searchChanges(query: string, limit = 50) {
     const { data: fallbackData, error: fallbackError } = await getSupabaseAdmin()
       .from('changes')
       .select('*, pages(*)')
-      .or(`diff_summary.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
+      .or(`diff_summary.ilike.%${escapedQuery}%,diff_html.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
       .order('detected_at', { ascending: false })
       .limit(limit);
 
@@ -329,6 +329,37 @@ export async function getGitHubReleasePages() {
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getExistingChange(pageId: string, detectedAt: string) {
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('id, change_type')
+    .eq('page_id', pageId)
+    .eq('detected_at', detectedAt)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateChange(
+  changeId: string,
+  updates: {
+    snapshot_after_id?: string;
+    change_type?: ChangeType;
+    diff_html?: string | null;
+    diff_summary?: string | null;
+    is_breaking?: boolean;
+  },
+) {
+  const { error } = await getSupabaseAdmin()
+    .from('changes')
+    .update(updates)
+    .eq('id', changeId);
+
+  if (error) throw error;
 }
 
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility

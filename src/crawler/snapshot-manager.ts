@@ -4,6 +4,8 @@ import {
   insertSnapshot,
   getLatestSnapshot,
   insertChange,
+  getExistingChange,
+  updateChange,
   getCategoryFromPage,
 } from '@/db/queries';
 import { getDomainFromUrl, getSectionFromUrl } from './sitemap-parser';
@@ -75,6 +77,12 @@ export async function processSnapshot(
     let diffHtml: string | null = null;
     let sidebarOnlyChange = false;
 
+    if (isNewPage) {
+      // For new pages, generate diff showing entire content as added
+      const diff = generateTextDiff('', crawlResult.contentText);
+      diffHtml = diff.diffHtml;
+    }
+
     if (!isNewPage && latestSnapshot) {
       const diff = generateTextDiff(latestSnapshot.content_text, crawlResult.contentText);
       diffHtml = diff.diffHtml;
@@ -107,6 +115,9 @@ export async function processSnapshot(
 
     // Skip inserting a 'modified' change when only the sidebar changed
     if (!sidebarOnlyChange) {
+      // Check for duplicate: same page + same date
+      const existingChange = await getExistingChange(page.id, today);
+
       let changeSummary: string | null = null;
       try {
         const diffText = diffHtml ?? undefined;
@@ -115,17 +126,33 @@ export async function processSnapshot(
         // Graceful fallback if API key missing or API fails
       }
       const { isBreaking } = detectBreakingChange(diffHtml ?? '');
-      await insertChange({
-        page_id: page.id,
-        snapshot_before_id: latestSnapshot?.id ?? null,
-        snapshot_after_id: newSnapshot.id,
-        change_type: changeType,
-        diff_html: diffHtml,
-        diff_summary: changeSummary,
-        detected_at: today,
-        is_silent: isSilent,
-        is_breaking: isBreaking,
-      });
+
+      if (existingChange) {
+        // Update existing change record instead of creating duplicate
+        try {
+          await updateChange(existingChange.id, {
+            snapshot_after_id: newSnapshot.id,
+            change_type: existingChange.change_type === 'added' ? 'added' : changeType,
+            diff_html: diffHtml,
+            diff_summary: changeSummary,
+            is_breaking: isBreaking,
+          });
+        } catch (err) {
+          console.warn(`[snapshot] Failed to update existing change ${existingChange.id}:`, err);
+        }
+      } else {
+        await insertChange({
+          page_id: page.id,
+          snapshot_before_id: latestSnapshot?.id ?? null,
+          snapshot_after_id: newSnapshot.id,
+          change_type: changeType,
+          diff_html: diffHtml,
+          diff_summary: changeSummary,
+          detected_at: today,
+          is_silent: isSilent,
+          is_breaking: isBreaking,
+        });
+      }
     }
 
     return {
