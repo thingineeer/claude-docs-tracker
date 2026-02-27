@@ -54,6 +54,11 @@ describe('categories', () => {
       expect(getCategoryForPage('github.com', null)).toBe('release-notes');
     });
 
+    it('classifies www.anthropic.com as anthropic-news', () => {
+      expect(getCategoryForPage('www.anthropic.com', 'news')).toBe('anthropic-news');
+      expect(getCategoryForPage('www.anthropic.com', null)).toBe('anthropic-news');
+    });
+
     it('handles unknown domains', () => {
       expect(getCategoryForPage('support.claude.com', 'some-section')).toBe('platform-docs');
       expect(getCategoryForPage('support.claude.com', null)).toBe('platform-docs');
@@ -87,8 +92,8 @@ describe('categories', () => {
   });
 
   describe('CATEGORIES constant', () => {
-    it('has exactly 4 categories', () => {
-      expect(Object.keys(CATEGORIES)).toHaveLength(4);
+    it('has exactly 5 categories', () => {
+      expect(Object.keys(CATEGORIES)).toHaveLength(5);
     });
 
     it('every category has required fields', () => {

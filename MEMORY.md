@@ -24,7 +24,7 @@
 - Diff: jsdiff
 - AI: Claude Haiku 4.5 API
 - Deploy: Vercel (GitHub 자동 배포, main push 시 프로덕션)
-- Test: Jest + ts-jest (89개 테스트, 8 suites)
+- Test: Jest + ts-jest (114개 테스트, 10 suites)
 
 ## 현재 페이지 구조 (v1.3)
 
@@ -158,12 +158,15 @@
 - **페이지네이션 미구현**: 최초 구현 시 `?per_page=100` 1페이지만 요청 → 100개 이후 릴리즈 누락. page 파라미터 추가하여 최대 10페이지(1000개) 순회하도록 수정
 - **relative time 부정확**: `detected_at`이 날짜만(`YYYY-MM-DD`) 저장되어 `parseISO()`가 자정 UTC로 파싱 → "about 12 hours ago" 표시. `created_at` (정확한 ISO 타임스탬프) 사용하도록 ChangeCard 수정
 - **GITHUB_TOKEN 미설정 경고**: 미인증 시 60 req/hr 제한이므로 경고 로그 추가
+- **검색 불능 (P0)**: `searchChanges()`가 `diff_summary`+`pages.title`+`pages.url`만 검색 → `diff_html` 미포함으로 모든 키워드 검색 0건. `diff_html.ilike` 추가하여 수정
+- **새 페이지 diff 누락**: 새 페이지(`isNewPage`)일 때 `diffHtml`이 null → diff 미표시. `generateTextDiff('', content)`로 전체 내용을 added diff로 생성하도록 수정
+- **중복 엔트리**: 같은 릴리즈가 다른 크롤링 사이클에서 중복 change 레코드 생성. `getExistingChange()` + `updateChange()`로 동일 page+date 중복 방지
 
 ### 관련 파일
 - `src/crawler/github-releases-crawler.ts` — 핵심 크롤러
 - `src/crawler/config.ts` — GITHUB_REPO, GITHUB_API_BASE 상수
 - `src/crawler/pipeline.ts` — skipGitHub 옵션, githubReleases 카운트
-- `src/db/queries.ts` — getGitHubReleasePages()
+- `src/db/queries.ts` — getGitHubReleasePages(), getExistingChange(), updateChange()
 - `scripts/seed-github-releases.ts` — 초기 데이터 시드 스크립트
 - `.env.example` — GITHUB_TOKEN (optional)
 
@@ -176,7 +179,7 @@
 ## 빌드 상태
 
 - TypeScript: 0 에러
-- Tests: 101/101 통과 (9 suites)
+- Tests: 114/114 통과 (10 suites)
 - 마지막 확인: 2026-02-27
 
 ## QA 수정 이력 (v1.3.1 — 2026-02-26)
@@ -220,6 +223,7 @@
 - globals.css: fadeIn/slideUpFadeIn 애니메이션, 다크모드 스크롤바, text-rendering: optimizeLegibility
 
 ### 검색 수정
+- searchChanges()에 `diff_html` 필드 검색 추가 (primary + fallback 모두)
 - searchChanges() fallback에 pages.title 검색 추가
 - getSearchSuggestions(): 키워드 빈도 분석으로 추천 칩 생성 (stopword 필터링)
 - 추천 칩이 실제 결과를 반환하도록 보장
@@ -227,6 +231,32 @@
 ### README 간소화
 - Quick Start, Setup, Contributing, Project Structure, API Usage 섹션 제거
 - 비교 테이블 + Features + Built With + License만 유지 (showcase 전용)
+
+## v4.2 버그 수정 (2026-02-27)
+
+### 검색 불능 수정 (P0 Critical)
+- `searchChanges()`에 `diff_html.ilike` 추가 (primary + fallback)
+- 이전: diff_summary(대부분 null) + title + url만 검색 → "MCP" 등 0건
+- 이후: diff 본문 키워드 검색 가능
+
+### 새 페이지 diff 생성 (P1 High)
+- `processSnapshot()`에서 `isNewPage`일 때 `generateTextDiff('', content)` 호출
+- 새 릴리즈(v2.1.61, v2.1.62 등) diff 내용 정상 표시
+
+### 중복 엔트리 방지 (P1 High)
+- `getExistingChange(pageId, detectedAt)`: 동일 page+date 기존 변경 조회
+- `updateChange(changeId, updates)`: 기존 변경 레코드 업데이트
+- 같은 날 재크롤링 시 insert 대신 update → 중복 제거
+
+### 신규 테스트 파일
+- `tests/queries.test.ts`: escapeLikePattern 6개 + 함수 export 3개
+- `tests/diff-generator.test.ts`: 새 페이지 diff 테스트 4개 추가
+
+## 깃 플로우 규칙
+
+- worktree 사용 시 feature 브랜치에서 작업 → `git merge --no-ff` 로 main에 병합
+- 직접 main에 커밋하지 않고 반드시 merge commit 생성 (branching graph 유지)
+- 선형 커밋 그래프 금지 — merge-based flow 엄수
 
 ## 보안 주의사항
 

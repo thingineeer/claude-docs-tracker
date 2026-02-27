@@ -10,3 +10,6 @@ export const USER_AGENT = 'claude-docs-tracker/1.0 (https://github.com/thinginee
 export const GITHUB_REPO = 'anthropics/claude-code';
 export const GITHUB_API_BASE = 'https://api.github.com';
 export const GITHUB_RELEASES_PER_PAGE = 100;
+
+// Anthropic News
+export const ANTHROPIC_NEWS_RECENT_LIMIT = 20;

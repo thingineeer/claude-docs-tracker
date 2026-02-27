@@ -7,6 +7,7 @@ import { CalendarGrid } from './calendar-grid';
 import { CategoryLegend } from './category-legend';
 import { DayDetail } from './day-detail';
 import { CATEGORY_ORDER, type CategoryType } from '@/lib/categories';
+import { getTodayString } from '@/lib/timezone';
 
 interface CalendarDayData {
   total: number;
@@ -23,7 +24,7 @@ function CalendarViewInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const today = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+  const today = useMemo(() => getTodayString(), []);
 
   const monthParam = searchParams.get('month');
   const { currentYear, currentMonth } = useMemo(() => {
@@ -99,7 +100,7 @@ function CalendarViewInner() {
     const now = new Date();
     const monthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     router.push(`/calendar?month=${monthStr}`);
-    setSelectedDate(format(now, 'yyyy-MM-dd'));
+    setSelectedDate(getTodayString());
   }, [router]);
 
   const handleSelectDate = useCallback((date: string) => {

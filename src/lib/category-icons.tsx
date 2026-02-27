@@ -82,12 +82,32 @@ export function ReleaseNotesIcon({ className }: IconProps) {
   );
 }
 
+/** Anthropic News - a newspaper icon */
+export function AnthropicNewsIcon({ className }: IconProps) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <rect x="2" y="2" width="12" height="12" rx="1" />
+      <path d="M5 5h6M5 8h3M5 11h6" />
+      <rect x="10" y="8" width="3" height="3" rx="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 /** Map from category type string to icon component */
 export const CATEGORY_ICONS: Record<string, React.FC<IconProps>> = {
   'platform-docs': PlatformDocsIcon,
   'agents-mcp': AgentsMcpIcon,
   'claude-code': ClaudeCodeIcon,
   'release-notes': ReleaseNotesIcon,
+  'anthropic-news': AnthropicNewsIcon,
 };
 
 /** Renders the appropriate SVG icon for a given category */

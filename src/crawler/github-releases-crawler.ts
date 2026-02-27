@@ -1,6 +1,7 @@
 import { GITHUB_REPO, GITHUB_API_BASE, GITHUB_RELEASES_PER_PAGE, MAX_RETRIES } from './config';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
 import { getGitHubReleasePages, getLatestSnapshotForPage, insertChange } from '@/db/queries';
+import { toLocalDateString, getTodayString } from '@/lib/timezone';
 import type { CrawlResult } from './page-crawler';
 
 export interface GitHubRelease {
@@ -96,7 +97,7 @@ export async function processGitHubReleases(): Promise<ProcessResult[]> {
 
   for (const release of releases) {
     const crawlResult = releaseToCrawlResult(release);
-    const detectedAt = release.published_at.split('T')[0];
+    const detectedAt = toLocalDateString(release.published_at);
     const result = await processSnapshot(crawlResult, { detectedAt });
     results.push(result);
 
@@ -116,7 +117,7 @@ export async function detectUnpublishedReleases(
   const currentUrlSet = new Set(currentReleaseUrls);
   const dbPages = await getGitHubReleasePages();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   let removedCount = 0;
 
   for (const page of dbPages) {

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
 import { enUS } from 'date-fns/locale';
+import { getTodayString } from '@/lib/timezone';
 
 interface DateNavProps {
   currentDate: string;
@@ -31,7 +32,7 @@ function formatCurrentDate(dateStr: string): string {
 
 export function DateNav({ currentDate, prevDate, nextDate, isToday }: DateNavProps) {
   const router = useRouter();
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = getTodayString();
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.value;

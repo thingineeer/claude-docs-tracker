@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/db/supabase';
 import { generateChangeSummary } from './ai-summary';
+import { toLocalDateString } from './timezone';
 
 export interface WeeklyDigestData {
   weekStart: string; // YYYY-MM-DD (Monday)
@@ -27,8 +28,8 @@ export async function generateWeeklyDigest(): Promise<WeeklyDigestData | null> {
   const lastSunday = new Date(lastMonday);
   lastSunday.setDate(lastMonday.getDate() + 6);
 
-  const weekStart = lastMonday.toISOString().split('T')[0];
-  const weekEnd = lastSunday.toISOString().split('T')[0];
+  const weekStart = toLocalDateString(lastMonday);
+  const weekEnd = toLocalDateString(lastSunday);
 
   // Query changes for that week
   const sb = getSupabaseAdmin();

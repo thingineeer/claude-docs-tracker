@@ -1,4 +1,5 @@
 import type { PipelineResult } from '@/crawler/pipeline';
+import { getTodayString } from '@/lib/timezone';
 
 export interface BreakingChangeInfo {
   pageTitle: string;
@@ -42,7 +43,7 @@ async function sendDiscordNotification(result: PipelineResult): Promise<void> {
   if (!url) return;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://claude-docs-tracker.vercel.app';
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
 
   const embed = {
     title: 'Claude Patch Notes - Daily Update',
@@ -68,7 +69,7 @@ async function sendSlackNotification(result: PipelineResult): Promise<void> {
   if (!url) return;
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://claude-docs-tracker.vercel.app';
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
 
   const payload = {
     blocks: [

@@ -12,6 +12,7 @@ import { getDomainFromUrl, getSectionFromUrl } from './sitemap-parser';
 import { generateTextDiff, generateSidebarDiff } from './diff-generator';
 import { generateChangeSummary } from '@/lib/ai-summary';
 import { detectBreakingChange } from '@/lib/breaking-detector';
+import { getTodayString } from '@/lib/timezone';
 import type { CrawlResult } from './page-crawler';
 import type { ChangeType } from '@/db/types';
 
@@ -72,7 +73,7 @@ export async function processSnapshot(
 
     const isNewPage = !latestSnapshot;
     const changeType: ChangeType = isNewPage ? 'added' : 'modified';
-    const today = options?.detectedAt ?? new Date().toISOString().split('T')[0];
+    const today = options?.detectedAt ?? getTodayString();
 
     let diffHtml: string | null = null;
     let sidebarOnlyChange = false;

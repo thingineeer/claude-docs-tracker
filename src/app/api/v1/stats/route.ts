@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/db/supabase';
+import { getTodayString } from '@/lib/timezone';
 
 export async function GET() {
   const sb = getSupabaseAdmin();
@@ -17,7 +18,7 @@ export async function GET() {
   }
 
   // Get today's changes
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   const { count: todayCount } = await sb
     .from('changes')
     .select('*', { count: 'exact', head: true })

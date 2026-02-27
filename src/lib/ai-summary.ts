@@ -1,4 +1,5 @@
 import { upsertDailyReport } from '@/db/queries';
+import { getTodayString } from './timezone';
 import type { ProcessResult } from '@/crawler/snapshot-manager';
 
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
@@ -65,7 +66,7 @@ Rules:
 export async function generateDailySummary(results: ProcessResult[]): Promise<string> {
   const newPages = results.filter((r) => r.status === 'new');
   const modified = results.filter((r) => r.status === 'modified');
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
 
   const prompt = `오늘의 Claude 문서 변경사항을 한국어로 2-3문장으로 요약하세요.
 
