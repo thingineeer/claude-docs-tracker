@@ -9,7 +9,7 @@
 - **설명**: Claude 공식 문서의 일일 변경사항을 추적하는 웹 서비스
 - **소유자**: thingineeer
 - **GitHub**: https://github.com/thingineeer/claude-docs-tracker
-- **상태**: v2.0 UX Overhaul 완료
+- **상태**: v2.0 UX Overhaul 완료 + 클린업
 - **Production URL**: https://claude-docs-tracker.vercel.app
 - **라이선스**: MIT
 - **공개 여부**: public 오픈소스 (처음부터)
@@ -24,7 +24,7 @@
 - Diff: jsdiff
 - AI: Claude Haiku 4.5 API
 - Deploy: Vercel (GitHub 자동 배포, main push 시 프로덕션)
-- Test: Jest + ts-jest (79개 테스트)
+- Test: Jest + ts-jest (80개 테스트)
 
 ## 현재 페이지 구조 (v1.3)
 
@@ -103,6 +103,12 @@
 - `src/components/mobile-nav.tsx` — 모바일 슬라이드 드로어
 - `src/components/command-k.tsx` — 글로벌 Cmd+K 단축키
 
+### 삭제된 파일 (클린업)
+- `src/components/navbar.tsx` — header.tsx로 대체, 데드코드 삭제
+- `prompts/` 디렉토리 (6파일) — 프로세스 산출물, 프로덕션 레포에 불필요
+- `UX-IMPROVEMENT-REPORT.md` — 프로세스 산출물
+- `CALENDAR_FEATURE_PROMPT.md` — 프로세스 산출물
+
 ## DB 상태
 
 - pages: 147개
@@ -112,8 +118,8 @@
 ## 빌드 상태
 
 - TypeScript: 0 에러
-- Tests: 79/79 통과 (7 suites)
-- 마지막 확인: 2026-02-26
+- Tests: 80/80 통과 (7 suites)
+- 마지막 확인: 2026-02-27
 
 ## QA 수정 이력 (v1.3.1 — 2026-02-26)
 
