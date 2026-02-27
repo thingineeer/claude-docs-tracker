@@ -2,14 +2,17 @@ import { fetchSitemapUrls } from './sitemap-parser';
 import { crawlPages } from './page-crawler';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
 import { processGitHubReleases, detectUnpublishedReleases, fetchGitHubReleases, releaseToCrawlResult } from './github-releases-crawler';
+import { processAnthropicNews } from './anthropic-news-crawler';
 import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange } from '@/db/queries';
 import { sendBreakingChangeAlert, type BreakingChangeInfo } from '@/lib/notifications';
+import { getTodayString } from '@/lib/timezone';
 
 export interface PipelineOptions {
   dryRun?: boolean;
   maxPages?: number;
   urls?: string[];
   skipGitHub?: boolean;
+  skipAnthropicNews?: boolean;
 }
 
 export interface PipelineResult {
@@ -21,6 +24,7 @@ export interface PipelineResult {
   unchanged: number;
   errors: number;
   githubReleases: number;
+  anthropicNews: number;
   results: ProcessResult[];
   breakingChanges?: Array<{
     pageTitle: string;
@@ -31,7 +35,7 @@ export interface PipelineResult {
 }
 
 export async function runPipeline(options: PipelineOptions = {}): Promise<PipelineResult> {
-  const { dryRun = false, maxPages, urls: customUrls, skipGitHub = false } = options;
+  const { dryRun = false, maxPages, urls: customUrls, skipGitHub = false, skipAnthropicNews = false } = options;
 
   console.log('[pipeline] Starting crawl pipeline...');
 
@@ -63,6 +67,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
       unchanged: 0,
       errors: 0,
       githubReleases: 0,
+      anthropicNews: 0,
       results: [],
     };
   }
@@ -103,7 +108,18 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     }
   }
 
-  const allResults = [...results, ...githubResults];
+  // Phase 3: Anthropic News
+  let anthropicNewsResults: ProcessResult[] = [];
+  if (!skipAnthropicNews && !dryRun && !customUrls) {
+    try {
+      console.log('[pipeline] Processing Anthropic news...');
+      anthropicNewsResults = await processAnthropicNews();
+    } catch (error) {
+      console.error('[pipeline] Anthropic news phase failed (other results preserved):', error);
+    }
+  }
+
+  const allResults = [...results, ...githubResults, ...anthropicNewsResults];
 
   // Step 4: Detect stale (removed) pages
   let removedCount = 0;
@@ -113,18 +129,19 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
 
   // Step 5: Generate daily report
   const summary: PipelineResult = {
-    totalUrls: urls.length + githubResults.length,
-    crawled: crawlResults.length + githubResults.length,
+    totalUrls: urls.length + githubResults.length + anthropicNewsResults.length,
+    crawled: crawlResults.length + githubResults.length + anthropicNewsResults.length,
     newPages: allResults.filter((r) => r.status === 'new').length,
     modifiedPages: allResults.filter((r) => r.status === 'modified').length,
     removedPages: removedCount + githubRemovedCount,
     unchanged: allResults.filter((r) => r.status === 'unchanged').length,
     errors: allResults.filter((r) => r.status === 'error').length,
     githubReleases: githubResults.filter((r) => r.status !== 'unchanged').length,
+    anthropicNews: anthropicNewsResults.filter((r) => r.status !== 'unchanged').length,
     results: allResults,
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   await upsertDailyReport({
     report_date: today,
     total_changes: summary.newPages + summary.modifiedPages + summary.removedPages,
@@ -172,7 +189,7 @@ async function detectRemovedPages(sitemapUrls: string[]): Promise<number> {
   const sitemapUrlSet = new Set(sitemapUrls);
   const dbPages = await getDocumentationPages();
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayString();
   let removedCount = 0;
 
   for (const page of dbPages) {

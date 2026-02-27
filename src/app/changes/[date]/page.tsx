@@ -6,6 +6,7 @@ import { getChangesByDate } from '@/db/queries';
 import { ChangeCard } from '@/components/change-card';
 import { DateNav } from '@/components/date-nav';
 import { validateDateString } from '@/lib/calendar-utils';
+import { getTodayString } from '@/lib/timezone';
 import type { ChangeType } from '@/db/types';
 import type { Metadata } from 'next';
 
@@ -67,7 +68,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
 
   // Validate date format and value (e.g., reject Feb 30)
   if (!validateDateString(date)) {
-    redirect(`/changes/${format(new Date(), 'yyyy-MM-dd')}`);
+    redirect(`/changes/${getTodayString()}`);
   }
 
   let changes: Awaited<ReturnType<typeof getChangesByDate>> = [];
@@ -81,7 +82,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
 
   const prevDate = format(subDays(new Date(date), 1), 'yyyy-MM-dd');
   const nextDate = format(addDays(new Date(date), 1), 'yyyy-MM-dd');
-  const isToday = date === format(new Date(), 'yyyy-MM-dd');
+  const isToday = date === getTodayString();
 
   const formattedDate = (() => {
     try {

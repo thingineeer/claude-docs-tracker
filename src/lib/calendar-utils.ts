@@ -6,6 +6,8 @@
  * into calendar-friendly structures.
  */
 
+import { getTodayString } from './timezone';
+
 /**
  * Validate year parameter.
  * Accepts years from 2024 to 2100 inclusive.
@@ -84,7 +86,7 @@ export function getMonthDateRange(
  * @returns true if the date matches today in the local timezone
  */
 export function isToday(dateStr: string): boolean {
-  return dateStr === new Date().toISOString().split('T')[0];
+  return dateStr === getTodayString();
 }
 
 /**

@@ -10,7 +10,8 @@ export type CategoryType =
   | 'platform-docs'
   | 'agents-mcp'
   | 'claude-code'
-  | 'release-notes';
+  | 'release-notes'
+  | 'anthropic-news';
 
 export interface CategoryConfig {
   /** Display name shown in UI */
@@ -53,6 +54,13 @@ export const CATEGORIES: Record<CategoryType, CategoryConfig> = {
     color: '#F59E0B',
     dotColor: '#FBBF24',
     description: 'Version updates and release announcements (Claude Code, Platform)',
+  },
+  'anthropic-news': {
+    name: 'Anthropic News',
+    icon: 'anthropic-news',
+    color: '#EC4899',
+    dotColor: '#F472B6',
+    description: 'Official Anthropic news, blog posts, and announcements',
   },
 } as const;
 
@@ -139,6 +147,11 @@ export function getCategoryForPage(
     return 'release-notes';
   }
 
+  // www.anthropic.com/news: anthropic-news
+  if (domain === 'www.anthropic.com') {
+    return 'anthropic-news';
+  }
+
   // code.claude.com: default to 'claude-code' unless overridden
   if (domain === 'code.claude.com') {
     if (section && section in CODE_SECTION_MAP) {
@@ -174,4 +187,5 @@ export const CATEGORY_ORDER: CategoryType[] = [
   'agents-mcp',
   'claude-code',
   'release-notes',
+  'anthropic-news',
 ];

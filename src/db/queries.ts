@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from './supabase';
+import { toLocalDateString } from '@/lib/timezone';
 import type { ChangeType } from './types';
 
 /**
@@ -231,7 +232,7 @@ export async function getRecentChangeCounts(days = 7) {
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
-    dates.push(d.toISOString().split('T')[0]);
+    dates.push(toLocalDateString(d));
   }
 
   const startDate = dates[0];

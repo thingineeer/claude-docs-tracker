@@ -1,6 +1,7 @@
 import Link from 'next/link';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
 import { getLatestChanges, getPageCount, getTodayStats, getRecentChangeCounts } from '@/db/queries';
+import { getTodayString } from '@/lib/timezone';
 import { ChangeCard } from '@/components/change-card';
 import { TimelineBar } from '@/components/timeline-bar';
 import type { ChangeType } from '@/db/types';
@@ -14,7 +15,7 @@ export default async function HomePage() {
   let timelineData: { date: string; count: number }[] = [];
   let fetchError = false;
 
-  const today = format(new Date(), 'yyyy-MM-dd');
+  const today = getTodayString();
 
   try {
     [changes, pageCount, todayStats, timelineData] = await Promise.all([
