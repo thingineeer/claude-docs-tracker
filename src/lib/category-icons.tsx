@@ -23,8 +23,8 @@ export function PlatformDocsIcon({ className }: IconProps) {
   );
 }
 
-/** Agent Tools - a robot icon */
-export function AgentToolsIcon({ className }: IconProps) {
+/** Agents & MCP - a robot icon */
+export function AgentsMcpIcon({ className }: IconProps) {
   return (
     <svg
       className={className}
@@ -85,7 +85,7 @@ export function ReleaseNotesIcon({ className }: IconProps) {
 /** Map from category type string to icon component */
 export const CATEGORY_ICONS: Record<string, React.FC<IconProps>> = {
   'platform-docs': PlatformDocsIcon,
-  'agent-tools': AgentToolsIcon,
+  'agents-mcp': AgentsMcpIcon,
   'claude-code': ClaudeCodeIcon,
   'release-notes': ReleaseNotesIcon,
 };

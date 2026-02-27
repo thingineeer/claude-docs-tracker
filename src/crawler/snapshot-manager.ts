@@ -8,6 +8,7 @@ import {
 } from '@/db/queries';
 import { getDomainFromUrl, getSectionFromUrl } from './sitemap-parser';
 import { generateTextDiff, generateSidebarDiff } from './diff-generator';
+import { generateChangeSummary } from '@/lib/ai-summary';
 import type { CrawlResult } from './page-crawler';
 import type { ChangeType } from '@/db/types';
 
@@ -78,13 +79,19 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
       );
       if (sidebarDiff.hasChanges && !diff.hasChanges) {
         sidebarOnlyChange = true;
+        let sidebarSummary: string | null = null;
+        try {
+          sidebarSummary = await generateChangeSummary(crawlResult.title, 'sidebar_changed');
+        } catch {
+          // Graceful fallback if API key missing or API fails
+        }
         await insertChange({
           page_id: page.id,
           snapshot_before_id: latestSnapshot.id,
           snapshot_after_id: newSnapshot.id,
           change_type: 'sidebar_changed',
           diff_html: null,
-          diff_summary: null,
+          diff_summary: sidebarSummary,
           detected_at: today,
         });
       }
@@ -92,13 +99,20 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
 
     // Skip inserting a 'modified' change when only the sidebar changed
     if (!sidebarOnlyChange) {
+      let changeSummary: string | null = null;
+      try {
+        const diffText = diffHtml ?? undefined;
+        changeSummary = await generateChangeSummary(crawlResult.title, changeType, diffText);
+      } catch {
+        // Graceful fallback if API key missing or API fails
+      }
       await insertChange({
         page_id: page.id,
         snapshot_before_id: latestSnapshot?.id ?? null,
         snapshot_after_id: newSnapshot.id,
         change_type: changeType,
         diff_html: diffHtml,
-        diff_summary: null,
+        diff_summary: changeSummary,
         detected_at: today,
       });
     }

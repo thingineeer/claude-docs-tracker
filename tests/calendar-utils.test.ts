@@ -189,14 +189,14 @@ describe('calendar-utils', () => {
     it('aggregates changes across multiple days', () => {
       const result = aggregateByDateAndCategory([
         { detected_at: '2026-02-01', category: 'platform-docs' },
-        { detected_at: '2026-02-01', category: 'agent-tools' },
+        { detected_at: '2026-02-01', category: 'agents-mcp' },
         { detected_at: '2026-02-02', category: 'claude-code' },
         { detected_at: '2026-02-03', category: 'release-notes' },
         { detected_at: '2026-02-03', category: 'release-notes' },
       ]);
       expect(result['2026-02-01']).toEqual({
         total: 2,
-        categories: { 'platform-docs': 1, 'agent-tools': 1 },
+        categories: { 'platform-docs': 1, 'agents-mcp': 1 },
       });
       expect(result['2026-02-02']).toEqual({
         total: 1,
@@ -211,7 +211,7 @@ describe('calendar-utils', () => {
     it('handles all four category types', () => {
       const allCategories = [
         'platform-docs',
-        'agent-tools',
+        'agents-mcp',
         'claude-code',
         'release-notes',
       ];

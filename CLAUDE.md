@@ -122,14 +122,15 @@ claude-docs-tracker/
 └── README.md             # 프로젝트 소개
 ```
 
-## 현재 상태 요약 (2026-02-26)
+## 현재 상태 요약 (2026-02-27)
 
 - 네비: Home / Calendar / Search (3개)
-- 카테고리: platform-docs / agent-tools / claude-code / release-notes (4개, SVG 아이콘)
+- 카테고리: platform-docs / claude-code / agents-mcp / release-notes (4개, SVG 아이콘)
 - 홈페이지: 인라인 스탯 + Activity Dot Strip + Recent Changes
 - DB: 147 pages, 16 changes (초기 크롤링 데이터 삭제 후 실제 변경만)
 - 삭제된 페이지: /sidebar-diff, /changes (redirect)
 - 모든 스탯은 daily_reports 미사용, changes 테이블 직접 집계
+- 크롤러: diff_summary에 AI 요약 자동 생성 (CLAUDE_API_KEY 없으면 graceful null fallback)
 
 ## 작업 시작 전 필수 확인
 

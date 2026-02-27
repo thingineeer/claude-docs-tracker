@@ -146,7 +146,7 @@ export async function searchChanges(query: string, limit = 50) {
   const { data, error } = await getSupabaseAdmin()
     .from('changes')
     .select('*, pages!inner(*)')
-    .or(`diff_summary.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%`)
+    .or(`diff_summary.ilike.%${escapedQuery}%,pages.title.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
     .order('detected_at', { ascending: false })
     .limit(limit);
 
@@ -155,7 +155,7 @@ export async function searchChanges(query: string, limit = 50) {
     const { data: fallbackData, error: fallbackError } = await getSupabaseAdmin()
       .from('changes')
       .select('*, pages(*)')
-      .ilike('diff_summary', `%${escapedQuery}%`)
+      .or(`diff_summary.ilike.%${escapedQuery}%,pages.url.ilike.%${escapedQuery}%`)
       .order('detected_at', { ascending: false })
       .limit(limit);
 

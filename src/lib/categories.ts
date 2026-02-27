@@ -8,7 +8,7 @@
 
 export type CategoryType =
   | 'platform-docs'
-  | 'agent-tools'
+  | 'agents-mcp'
   | 'claude-code'
   | 'release-notes';
 
@@ -29,29 +29,29 @@ export const CATEGORIES: Record<CategoryType, CategoryConfig> = {
   'platform-docs': {
     name: 'Platform Docs',
     icon: 'platform-docs',
-    color: '#3B82F6',
-    dotColor: '#60A5FA',
+    color: '#8B5CF6',
+    dotColor: '#A78BFA',
     description: 'API reference, guides, getting started, and platform documentation',
   },
-  'agent-tools': {
-    name: 'Agents & Tools',
-    icon: 'agent-tools',
+  'agents-mcp': {
+    name: 'Agents & MCP',
+    icon: 'agents-mcp',
     color: '#10B981',
     dotColor: '#34D399',
-    description: 'Agent SDK, MCP, tool use, and agent capabilities',
+    description: 'Agent SDK, agents and tools, MCP protocol and integrations',
   },
   'claude-code': {
     name: 'Claude Code',
     icon: 'claude-code',
-    color: '#8B5CF6',
-    dotColor: '#A78BFA',
+    color: '#3B82F6',
+    dotColor: '#60A5FA',
     description: 'CLI tool, IDE plugins, hooks, and CI/CD integration',
   },
   'release-notes': {
     name: 'Release Notes',
     icon: 'release-notes',
-    color: '#EC4899',
-    dotColor: '#F472B6',
+    color: '#F59E0B',
+    dotColor: '#FBBF24',
     description: 'Version updates, changelogs, and deprecation notices',
   },
 } as const;
@@ -79,9 +79,9 @@ const PLATFORM_SECTION_MAP: Record<string, CategoryType> = {
   // API Reference -> Platform Docs
   'api': 'platform-docs',
 
-  // Agent SDK & Tools
-  'agent-sdk': 'agent-tools',
-  'agents-and-tools': 'agent-tools',
+  // Agent SDK & Tools -> Agents & MCP
+  'agent-sdk': 'agents-mcp',
+  'agents-and-tools': 'agents-mcp',
 
   // Administration -> Platform Docs (platform management)
   'administration': 'platform-docs',
@@ -106,12 +106,8 @@ const PLATFORM_SECTION_MAP: Record<string, CategoryType> = {
  * itself becomes the section value.
  */
 const CODE_SECTION_MAP: Record<string, CategoryType> = {
-  // Getting started -> Platform Docs
-  'overview': 'platform-docs',
-  'quickstart': 'platform-docs',
-
-  // MCP-related -> Agent & Tools
-  'mcp': 'agent-tools',
+  // MCP-related -> Agents & MCP
+  'mcp': 'agents-mcp',
 
   // Release notes
   'changelog': 'release-notes',
@@ -129,7 +125,7 @@ const CODE_SECTION_MAP: Record<string, CategoryType> = {
  * ```ts
  * getCategoryForPage('platform.claude.com', 'api')           // 'platform-docs'
  * getCategoryForPage('code.claude.com', 'hooks')             // 'claude-code'
- * getCategoryForPage('platform.claude.com', 'agent-sdk')     // 'agent-tools'
+ * getCategoryForPage('platform.claude.com', 'agent-sdk')     // 'agents-mcp'
  * getCategoryForPage('platform.claude.com', 'release-notes') // 'release-notes'
  * getCategoryForPage('platform.claude.com', null)            // 'platform-docs'
  * ```
@@ -170,7 +166,7 @@ export function getCategoryConfig(
 /** List all category types in display order. */
 export const CATEGORY_ORDER: CategoryType[] = [
   'platform-docs',
-  'agent-tools',
+  'agents-mcp',
   'claude-code',
   'release-notes',
 ];

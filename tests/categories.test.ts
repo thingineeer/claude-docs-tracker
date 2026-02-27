@@ -18,9 +18,9 @@ describe('categories', () => {
     });
 
     it('overrides code.claude.com for special sections', () => {
-      expect(getCategoryForPage('code.claude.com', 'overview')).toBe('platform-docs');
-      expect(getCategoryForPage('code.claude.com', 'quickstart')).toBe('platform-docs');
-      expect(getCategoryForPage('code.claude.com', 'mcp')).toBe('agent-tools');
+      expect(getCategoryForPage('code.claude.com', 'overview')).toBe('claude-code');
+      expect(getCategoryForPage('code.claude.com', 'quickstart')).toBe('claude-code');
+      expect(getCategoryForPage('code.claude.com', 'mcp')).toBe('agents-mcp');
       expect(getCategoryForPage('code.claude.com', 'changelog')).toBe('release-notes');
     });
 
@@ -30,8 +30,8 @@ describe('categories', () => {
       expect(getCategoryForPage('platform.claude.com', 'build-with-claude')).toBe('platform-docs');
       expect(getCategoryForPage('platform.claude.com', 'about-claude')).toBe('platform-docs');
       expect(getCategoryForPage('platform.claude.com', 'prompt-engineering')).toBe('platform-docs');
-      expect(getCategoryForPage('platform.claude.com', 'agent-sdk')).toBe('agent-tools');
-      expect(getCategoryForPage('platform.claude.com', 'agents-and-tools')).toBe('agent-tools');
+      expect(getCategoryForPage('platform.claude.com', 'agent-sdk')).toBe('agents-mcp');
+      expect(getCategoryForPage('platform.claude.com', 'agents-and-tools')).toBe('agents-mcp');
       expect(getCategoryForPage('platform.claude.com', 'test-and-evaluate')).toBe('platform-docs');
       expect(getCategoryForPage('platform.claude.com', 'release-notes')).toBe('release-notes');
       expect(getCategoryForPage('platform.claude.com', 'intro')).toBe('platform-docs');

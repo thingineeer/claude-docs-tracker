@@ -9,7 +9,7 @@
 - **설명**: Claude 공식 문서의 일일 변경사항을 추적하는 웹 서비스
 - **소유자**: thingineeer
 - **GitHub**: https://github.com/thingineeer/claude-docs-tracker
-- **상태**: v2.0 UX Overhaul 완료 + 클린업
+- **상태**: v2.1 카테고리 재설계 + 검색 버그 수정 완료
 - **Production URL**: https://claude-docs-tracker.vercel.app
 - **라이선스**: MIT
 - **공개 여부**: public 오픈소스 (처음부터)
@@ -56,18 +56,20 @@
 - `/api/feed/rss` — RSS 피드
 - `/api/feed/json` — JSON 피드
 
-## 카테고리 시스템 (4개, v1.3)
+## 카테고리 시스템 (4개, v2.1)
 
-| 카테고리 | 매핑 | 색상 | 아이콘 |
-|----------|------|------|--------|
-| platform-docs | platform: 모든 섹션 + code: overview/quickstart | #3B82F6 | SVG 문서 아이콘 |
-| agent-tools | agent-sdk, agents-and-tools, mcp | #10B981 | SVG 로봇 아이콘 |
-| claude-code | code.claude.com 기본 | #8B5CF6 | SVG 터미널 아이콘 |
-| release-notes | release-notes, changelog | #EC4899 | SVG 스피커 아이콘 |
+| 카테고리 | slug | 매핑 | 색상 | 아이콘 |
+|----------|------|------|------|--------|
+| Platform Docs | `platform-docs` | platform: API, guides, getting-started 등 | #8B5CF6 (purple) | SVG 문서 아이콘 |
+| Claude Code | `claude-code` | code.claude.com 전체 (overview, quickstart 포함) | #3B82F6 (blue) | SVG 터미널 아이콘 |
+| Agents & MCP | `agents-mcp` | agent-sdk, agents-and-tools, mcp | #10B981 (green) | SVG 로봇 아이콘 |
+| Release Notes | `release-notes` | platform release-notes + code changelog | #F59E0B (amber) | SVG 스피커 아이콘 |
 
 - 아이콘: `src/lib/category-icons.tsx` (커스텀 SVG, 이모지 없음)
 - 분류 로직: `src/lib/categories.ts` (`getCategoryForPage`)
 - DB 동기화: `src/db/queries.ts` (`getCategoryFromPage → categories.ts의 getCategoryForPage re-export`)
+- 마이그레이션: `supabase/migrations/004_update_categories.sql`, `scripts/run-migration-004.mjs`
+- 변경점 (v2.0→v2.1): agent-tools→agents-mcp 리네이밍, overview/quickstart→claude-code 이동, 색상 재배치
 
 ## 홈페이지 데이터 소스 (v1.3)
 
@@ -113,7 +115,7 @@
 
 - pages: 147개
 - changes: 16개 (초기 크롤링 137건 삭제 후 실제 변경만)
-- 마이그레이션: 001(초기), 002(sidebar), 003(category)
+- 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename)
 
 ## 빌드 상태
 
