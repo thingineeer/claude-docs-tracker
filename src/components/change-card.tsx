@@ -13,6 +13,7 @@ interface ChangeCardProps {
   summary?: string | null;
   diffHtml?: string | null;
   detectedAt: string;
+  createdAt?: string;
   highlightedTitle?: React.ReactNode;
   highlightedSummary?: React.ReactNode;
   isSilent?: boolean;
@@ -75,7 +76,7 @@ const changeTypeConfig: Record<ChangeType, { label: string; color: string; icon:
   },
 };
 
-export function ChangeCard({ title, url, changeType, summary, diffHtml, detectedAt, highlightedTitle, highlightedSummary, isSilent, isBreaking }: ChangeCardProps) {
+export function ChangeCard({ title, url, changeType, summary, diffHtml, detectedAt, createdAt, highlightedTitle, highlightedSummary, isSilent, isBreaking }: ChangeCardProps) {
   const [showDiff, setShowDiff] = useState(false);
   const config = changeTypeConfig[changeType];
 
@@ -83,10 +84,11 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
   const categoryType = getCategoryForPage(domain, section);
   const categoryConfig = CATEGORIES[categoryType];
 
-  // Compute relative time from detectedAt date
+  // Compute relative time — prefer createdAt (precise timestamp) over detectedAt (date only)
   const relativeTime = (() => {
     try {
-      return formatDistanceToNow(parseISO(detectedAt), { addSuffix: true });
+      const timestamp = createdAt ?? detectedAt;
+      return formatDistanceToNow(parseISO(timestamp), { addSuffix: true });
     } catch {
       return detectedAt;
     }

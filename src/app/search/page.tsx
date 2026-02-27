@@ -12,6 +12,7 @@ interface SearchResult {
   diff_summary: string | null;
   diff_html: string | null;
   detected_at: string;
+  created_at: string;
   pages: { title: string; url: string } | null;
 }
 
@@ -259,6 +260,7 @@ function SearchContent() {
               }
               diffHtml={change.diff_html}
               detectedAt={change.detected_at}
+              createdAt={change.created_at}
             />
           ))}
         </div>

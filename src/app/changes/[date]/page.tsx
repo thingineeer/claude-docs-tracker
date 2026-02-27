@@ -152,6 +152,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
                       summary={change.diff_summary}
                       diffHtml={change.diff_html}
                       detectedAt={change.detected_at}
+                      createdAt={change.created_at}
                     />
                   );
                 })}
@@ -177,6 +178,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
                       summary={change.diff_summary}
                       diffHtml={change.diff_html}
                       detectedAt={change.detected_at}
+                      createdAt={change.created_at}
                     />
                   );
                 })}
@@ -202,6 +204,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
                       summary={change.diff_summary}
                       diffHtml={change.diff_html}
                       detectedAt={change.detected_at}
+                      createdAt={change.created_at}
                     />
                   );
                 })}
@@ -227,6 +230,7 @@ export default async function ChangesDatePage({ params }: PageProps) {
                       summary={change.diff_summary}
                       diffHtml={change.diff_html}
                       detectedAt={change.detected_at}
+                      createdAt={change.created_at}
                     />
                   );
                 })}

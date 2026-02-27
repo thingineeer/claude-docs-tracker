@@ -33,7 +33,7 @@ export default async function HomePage() {
   const lastUpdatedText = changes.length > 0
     ? (() => {
         try {
-          return formatDistanceToNow(new Date(changes[0].detected_at), { addSuffix: true });
+          return formatDistanceToNow(new Date(changes[0].created_at), { addSuffix: true });
         } catch {
           return changes[0].detected_at;
         }
@@ -140,6 +140,7 @@ export default async function HomePage() {
                   summary={change.diff_summary}
                   diffHtml={change.diff_html}
                   detectedAt={change.detected_at}
+                  createdAt={change.created_at}
                 />
               );
             })}
