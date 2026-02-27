@@ -41,18 +41,18 @@ export const CATEGORIES: Record<CategoryType, CategoryConfig> = {
     description: 'Agent SDK, agents and tools, MCP protocol and integrations',
   },
   'claude-code': {
-    name: 'Claude Code',
+    name: 'Claude Code Docs',
     icon: 'claude-code',
     color: '#3B82F6',
     dotColor: '#60A5FA',
-    description: 'CLI tool, IDE plugins, hooks, and CI/CD integration',
+    description: 'CLI usage guides, IDE plugins, hooks, and configuration',
   },
   'release-notes': {
-    name: 'Release Notes',
+    name: 'Changelogs',
     icon: 'release-notes',
     color: '#F59E0B',
     dotColor: '#FBBF24',
-    description: 'Version updates, changelogs, and deprecation notices',
+    description: 'Version updates and release announcements (Claude Code, Platform)',
   },
 } as const;
 

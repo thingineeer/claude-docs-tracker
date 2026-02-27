@@ -111,7 +111,7 @@ describe('categories', () => {
   describe('getCategoryConfig', () => {
     it('returns correct config for a page', () => {
       const config = getCategoryConfig('code.claude.com', 'hooks');
-      expect(config.name).toBe('Claude Code');
+      expect(config.name).toBe('Claude Code Docs');
       expect(config.icon).toBeTruthy();
     });
   });
