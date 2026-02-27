@@ -60,6 +60,8 @@ export async function insertChange(change: {
   diff_html: string | null;
   diff_summary: string | null;
   detected_at: string;
+  is_silent?: boolean;
+  is_breaking?: boolean;
 }) {
   const { data, error } = await getSupabaseAdmin().from('changes').insert(change).select().single();
 
@@ -270,6 +272,29 @@ export async function getLatestSnapshotForPage(pageId: string) {
 
   if (error && error.code !== 'PGRST116') throw error;
   return data;
+}
+
+export async function getRecentPageTitles(limit = 5): Promise<string[]> {
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('pages(title)')
+    .order('detected_at', { ascending: false })
+    .limit(limit * 2);
+
+  if (error) return [];
+
+  const titles = new Set<string>();
+  for (const row of data ?? []) {
+    const page = row.pages as any;
+    if (page?.title && titles.size < limit) {
+      const shortTitle = page.title.split(/[—\-:|]/)[0].trim();
+      if (shortTitle.length <= 30) {
+        titles.add(shortTitle);
+      }
+    }
+  }
+
+  return Array.from(titles);
 }
 
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility

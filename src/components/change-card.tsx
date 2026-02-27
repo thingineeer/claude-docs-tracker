@@ -16,6 +16,8 @@ interface ChangeCardProps {
   detectedAt: string;
   highlightedTitle?: React.ReactNode;
   highlightedSummary?: React.ReactNode;
+  isSilent?: boolean;
+  isBreaking?: boolean;
 }
 
 function shortenUrl(url: string): string {
@@ -74,7 +76,7 @@ const changeTypeConfig: Record<ChangeType, { label: string; color: string; icon:
   },
 };
 
-export function ChangeCard({ title, url, changeType, summary, diffHtml, detectedAt, highlightedTitle, highlightedSummary }: ChangeCardProps) {
+export function ChangeCard({ title, url, changeType, summary, diffHtml, detectedAt, highlightedTitle, highlightedSummary, isSilent, isBreaking }: ChangeCardProps) {
   const [showDiff, setShowDiff] = useState(false);
   const config = changeTypeConfig[changeType];
 
@@ -110,11 +112,21 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
           </div>
 
           {/* Badge + relative time */}
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.color}`}>
               <span className="mr-1 font-mono">{config.icon}</span>
               {config.label}
             </span>
+            {isBreaking && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-600 text-white">
+                Breaking
+              </span>
+            )}
+            {isSilent && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                Silent Change
+              </span>
+            )}
             <span className="text-xs text-muted" title={detectedAt}>{relativeTime}</span>
           </div>
 

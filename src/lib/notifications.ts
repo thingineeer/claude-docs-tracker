@@ -1,5 +1,13 @@
 import type { PipelineResult } from '@/crawler/pipeline';
 
+export interface BreakingChangeInfo {
+  pageTitle: string;
+  pageUrl: string;
+  changeType: string;
+  matchedKeywords: string[];
+  detectedAt: string;
+}
+
 export async function sendNotifications(result: PipelineResult): Promise<void> {
   const promises: Promise<void>[] = [];
 
@@ -9,6 +17,21 @@ export async function sendNotifications(result: PipelineResult): Promise<void> {
 
   if (process.env.WEBHOOK_SLACK_URL) {
     promises.push(sendSlackNotification(result));
+  }
+
+  await Promise.allSettled(promises);
+}
+
+export async function sendBreakingChangeAlert(changes: BreakingChangeInfo[]): Promise<void> {
+  if (changes.length === 0) return;
+
+  const promises: Promise<void>[] = [];
+
+  if (process.env.WEBHOOK_DISCORD_URL) {
+    promises.push(sendDiscordBreakingAlert(changes));
+  }
+  if (process.env.WEBHOOK_SLACK_URL) {
+    promises.push(sendSlackBreakingAlert(changes));
   }
 
   await Promise.allSettled(promises);
@@ -70,6 +93,71 @@ async function sendSlackNotification(result: PipelineResult): Promise<void> {
             text: { type: 'plain_text', text: 'View Changes' },
             url: `${siteUrl}/changes/${today}`,
           },
+        ],
+      },
+    ],
+  };
+
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
+async function sendDiscordBreakingAlert(changes: BreakingChangeInfo[]): Promise<void> {
+  const url = process.env.WEBHOOK_DISCORD_URL;
+  if (!url) return;
+
+  const fields = changes.map((change) => ({
+    name: change.pageTitle,
+    value: [
+      `**URL:** ${change.pageUrl}`,
+      `**Type:** ${change.changeType}`,
+      `**Keywords:** ${change.matchedKeywords.join(', ')}`,
+      `**Detected:** ${change.detectedAt}`,
+    ].join('\n'),
+    inline: false,
+  }));
+
+  const embed = {
+    title: '\u26a0\ufe0f Breaking Change Detected',
+    color: 0xff0000,
+    fields,
+    timestamp: new Date().toISOString(),
+  };
+
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ embeds: [embed] }),
+  });
+}
+
+async function sendSlackBreakingAlert(changes: BreakingChangeInfo[]): Promise<void> {
+  const url = process.env.WEBHOOK_SLACK_URL;
+  if (!url) return;
+
+  const sections = changes.map((change) => ({
+    type: 'section' as const,
+    fields: [
+      { type: 'mrkdwn' as const, text: `*Page:* <${change.pageUrl}|${change.pageTitle}>` },
+      { type: 'mrkdwn' as const, text: `*Type:* ${change.changeType}` },
+      { type: 'mrkdwn' as const, text: `*Keywords:* ${change.matchedKeywords.join(', ')}` },
+      { type: 'mrkdwn' as const, text: `*Detected:* ${change.detectedAt}` },
+    ],
+  }));
+
+  const payload = {
+    attachments: [
+      {
+        color: '#FF0000',
+        blocks: [
+          {
+            type: 'header',
+            text: { type: 'plain_text', text: 'Breaking Change Detected' },
+          },
+          ...sections,
         ],
       },
     ],

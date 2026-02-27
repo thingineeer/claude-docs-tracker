@@ -31,6 +31,8 @@ export interface Change {
   diff_summary: string | null;
   detected_at: string;
   created_at: string;
+  is_silent: boolean;
+  is_breaking: boolean;
 }
 
 export interface DailyReport {

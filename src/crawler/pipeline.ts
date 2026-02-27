@@ -2,6 +2,7 @@ import { fetchSitemapUrls } from './sitemap-parser';
 import { crawlPages } from './page-crawler';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
 import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange } from '@/db/queries';
+import { sendBreakingChangeAlert, type BreakingChangeInfo } from '@/lib/notifications';
 
 export interface PipelineOptions {
   dryRun?: boolean;
@@ -18,6 +19,12 @@ export interface PipelineResult {
   unchanged: number;
   errors: number;
   results: ProcessResult[];
+  breakingChanges?: Array<{
+    pageTitle: string;
+    pageUrl: string;
+    changeType: string;
+    matchedKeywords: string[];
+  }>;
 }
 
 export async function runPipeline(options: PipelineOptions = {}): Promise<PipelineResult> {
@@ -104,6 +111,27 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     removed_pages: summary.removedPages,
     ai_summary: null,
   });
+
+  // Step 6: Check for breaking changes and fire alerts
+  const breakingResults = results.filter(
+    (r): r is ProcessResult & { isBreaking: true; matchedKeywords: string[] } =>
+      'isBreaking' in r && (r as Record<string, unknown>).isBreaking === true,
+  );
+
+  if (breakingResults.length > 0) {
+    const breakingChanges: BreakingChangeInfo[] = breakingResults.map((r) => ({
+      pageTitle: r.url,
+      pageUrl: r.url,
+      changeType: r.changeType ?? 'modified',
+      matchedKeywords: r.matchedKeywords ?? [],
+      detectedAt: today,
+    }));
+
+    summary.breakingChanges = breakingChanges;
+
+    console.log(`[pipeline] ${breakingChanges.length} breaking change(s) detected, sending alerts...`);
+    await sendBreakingChangeAlert(breakingChanges);
+  }
 
   console.log('[pipeline] Complete!');
   console.log(`  New: ${summary.newPages}, Modified: ${summary.modifiedPages}, Removed: ${summary.removedPages}, Unchanged: ${summary.unchanged}, Errors: ${summary.errors}`);

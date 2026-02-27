@@ -1,128 +1,184 @@
-# TASK: 카테고리 재설계 + 검색 버그 수정
+# TASK: v3.0 — 경쟁사 분석 기반 성장 기능 구현
 
 > 작업 전 반드시 `CLAUDE.md`와 `MEMORY.md`를 읽어 프로젝트 컨텍스트를 파악하라.
+> 현재 v2.1 상태이며, 카테고리 재설계 + 검색 버그 수정 + diff_summary AI 연결이 완료되어 있다.
 
 ---
 
-## Phase 1: 카테고리 토론 (구현 전 반드시 수행)
+## 배경: 경쟁사 Releasebot 분석
 
-현재 4개 카테고리에 UX 문제가 있다. 새로운 분류를 토론으로 확정하라.
+Releasebot(releasebot.io)은 $59/월 유료 서비스로 300개 벤더의 릴리즈 노트를 수집한다.
+Anthropic만 458건의 릴리즈 노트가 있고, Claude Code(237건), Claude Developer Platform(103건) 등으로 세분화되어 있다.
 
-### 현재 문제
-- Claude Code v2.1.59 같은 changelog가 "Release Notes"로 분류됨 → 사용자는 "Claude Code"에 있을 거라 기대
-- "Claude Code" 카테고리에는 CLI 설정 가이드만 남아서, 정작 버전 업데이트가 없음
-- Agents & Tools 카테고리의 페이지 수가 너무 적어 독립 카테고리 의미가 약함
+**Releasebot의 강점**: 넓은 커버리지, RSS/Email/API/CSV/MCP/Slack/n8n/Zapier 등 다양한 접근 방식, vendor→product→release 관계형 데이터 구조
 
-### 제안: 3개 카테고리
+**Releasebot이 못 하는 것 (우리의 무기)**:
+- 릴리즈 노트 없이 슬쩍 바뀐 문서 변경 감지 불가능
+- 실제 어떤 문장이 바뀌었는지 line diff 제공 불가
+- 사이드바 구조 변경 감지 불가
+- 즉, Releasebot은 "공식 발표만" 수집, 우리는 "실제 변경"을 수집
 
-| 카테고리 | slug | 포함 내용 |
-|---|---|---|
-| **Platform Docs** | `platform-docs` | API reference, guides, getting started, about-claude, build-with-claude, prompt-engineering, administration, test-and-evaluate, resources, home |
-| **Claude Code** | `claude-code` | code.claude.com 전체 (hooks, IDE, CLI, configuration, overview, quickstart 등) + agent-sdk, agents-and-tools, MCP |
-| **Changelogs** | `changelogs` | platform.claude.com/release-notes + code.claude.com/changelog |
+이 차별점을 살려서 다음 기능들을 구현한다.
 
-### 토론 방식
-1. **찬성자**: 위 3개 분류의 장점을 논증. Agents & Tools가 Claude Code에 합쳐지는 이유, Changelogs 이름의 직관성.
-2. **반증자**: 반대 논거. Agents & Tools 독립 필요성, "Changelogs" vs "Release Notes" vs "Updates" 네이밍, Claude Code에 MCP/Agent SDK가 들어가는 것의 혼란.
-3. **결론**: 최종 분류 확정. 카테고리 수, 이름, slug, 색상, 아이콘까지 결정.
+---
 
-토론 시 고려사항:
-- 실제 데이터: platform.claude.com ~93페이지, code.claude.com ~54페이지
-- agent-tools 현재 7페이지 (agent-sdk 2 + agents-and-tools 약 5), MCP 관련 수 페이지
-- 각 카테고리에 의미 있는 수의 페이지가 필요
-- 캘린더 dot 색상만으로 변경 종류를 즉시 파악 가능해야 함
+## Phase 1: 토론 (구현 전)
+
+다음 기능 목록에 대해 찬성자/반증자 토론을 진행하라.
+기술적 타당성, 구현 복잡도, 사용자 가치, 우선순위를 논의한 뒤 최종 구현 목록을 확정하라.
 
 ---
 
 ## Phase 2: 구현 (토론 결론에 따라 에이전트 팀 병렬 실행)
 
-### Task A: 카테고리 시스템 재설계
+### Task A: Silent Changes 감지 & 태깅
 
-토론 확정 분류에 따라 수정:
+**개념**: 릴리즈 노트에 공식 발표 없이 슬쩍 바뀐 문서를 "Silent Change"로 태깅한다.
+이게 Releasebot과의 핵심 차별점이다.
 
-1. **`src/lib/categories.ts`** — 핵심
-   - `CategoryType` 타입 변경
-   - `CATEGORIES` config (name, icon, color, dotColor, description)
-   - `PLATFORM_SECTION_MAP`, `CODE_SECTION_MAP` 재매핑
-   - `getCategoryForPage()` 로직 수정
-   - `CATEGORY_ORDER` 업데이트
+**구현**:
+1. `src/db/types.ts`에 change 레코드에 `is_silent` boolean 필드 추가 (또는 기존 change_type 활용)
+2. `supabase/migrations/005_add_silent_flag.sql` 생성
+3. `src/crawler/snapshot-manager.ts`에서 변경 감지 시:
+   - 같은 날짜에 해당 페이지가 릴리즈 노트 카테고리가 아닌데 변경됐으면 → `is_silent = true`
+   - 릴리즈 노트에 언급된 페이지면 → `is_silent = false`
+   - 심플하게: `release-notes` 카테고리가 아닌 change는 모두 silent로 간주해도 됨
+4. UI: change-card에 "🔇 Silent Change" 뱃지 표시 (릴리즈 노트에 없는 변경)
+5. 홈페이지, 검색, 캘린더에서 Silent Changes 필터링 가능
 
-2. **`src/lib/category-icons.tsx`** — 새 카테고리에 맞게 아이콘 수정
+### Task B: Breaking Change 자동 감지
 
-3. **`supabase/migrations/004_update_categories.sql`** — 새 마이그레이션
-   ```sql
-   UPDATE pages SET category = CASE ... END;
+**개념**: diff에서 "deprecated", "removed", "breaking", "no longer", "will be removed" 키워드를 자동 감지하여 경고 태그 부여
+
+**구현**:
+1. `src/lib/breaking-detector.ts` 신규 생성
+   ```typescript
+   const BREAKING_KEYWORDS = [
+     'deprecated', 'removed', 'breaking', 'no longer supported',
+     'will be removed', 'end of life', 'sunset', 'discontinued',
+     'migration required', 'incompatible', 'retired'
+   ];
+
+   export function detectBreakingChange(diffText: string): {
+     isBreaking: boolean;
+     matchedKeywords: string[];
+   }
    ```
+2. `snapshot-manager.ts`에서 변경 감지 후 `detectBreakingChange()` 호출
+3. `changes` 테이블에 `is_breaking` boolean 필드 추가 (migration 005에 포함)
+4. UI: change-card에 빨간색 "⚠️ Breaking" 뱃지, 캘린더에서 빨간 dot 표시
+5. 홈페이지에 "Breaking Changes" 섹션 또는 필터 추가
 
-4. **관련 컴포넌트** (타입 참조 업데이트):
-   - `src/components/calendar-grid.tsx`
-   - `src/components/calendar-view.tsx`
-   - `src/components/category-legend.tsx`
-   - `src/components/day-detail.tsx`
-   - `src/components/change-card.tsx`
-   - `src/app/api/calendar/route.ts`
-   - `src/app/api/calendar/[date]/route.ts`
+### Task C: 주간 다이제스트 자동 생성
 
-### Task B: 검색 버그 수정 (Critical — 3건)
+**개념**: 매주 월요일 "이번 주 Claude 문서에서 바뀐 것" 요약을 자동 생성
 
-**버그 1: diff_summary가 전부 null**
-- `src/crawler/snapshot-manager.ts` 87행, 101행: `diff_summary: null` 하드코딩
-- `src/lib/ai-summary.ts`에 `generateChangeSummary()` 함수 존재하지만 **호출되는 곳이 없음**
-- 수정: 크롤링 파이프라인에서 변경 감지 후 `generateChangeSummary()`를 호출하여 diff_summary를 채울 것
-- 호출 위치: `snapshot-manager.ts`의 `processSnapshot()` 내부, change insert 직전
-- CLAUDE_API_KEY 환경변수 없으면 graceful하게 null fallback (try-catch)
+**구현**:
+1. `src/lib/weekly-digest.ts` 신규 생성
+   - 지난 7일간의 changes를 조회
+   - Claude Haiku API로 한국어+영어 주간 요약 생성
+   - Breaking changes 하이라이트
+   - Silent changes 개수 표시
+2. `src/app/api/cron/digest/route.ts` — 주간 크론 엔드포인트
+3. `src/app/digest/page.tsx` — 주간 다이제스트 페이지 (또는 홈페이지에 통합)
+4. `vercel.json`에 주간 크론 추가
+5. digest 데이터를 `daily_reports` 테이블 활용하거나 새 테이블 생성
 
-**버그 2: 검색 범위 너무 좁음**
-- `src/db/queries.ts` 149행의 `searchChanges()`:
-  ```typescript
-  .or(`diff_summary.ilike.%${q}%,pages.title.ilike.%${q}%`)
-  ```
-- `pages.url`도 검색 대상에 추가:
-  ```typescript
-  .or(`diff_summary.ilike.%${q}%,pages.title.ilike.%${q}%,pages.url.ilike.%${q}%`)
-  ```
+### Task D: Public API 정비
 
-**버그 3: 추천 칩 하드코딩으로 검색 결과 0**
-- `src/app/search/page.tsx` 17행: `const SUGGESTION_CHIPS = ['vision', 'streaming', 'tool use', 'MCP']`
-- 이 키워드들로 검색하면 결과가 0건 → 사용자 신뢰 훼손
-- 해결: 실제 검색 결과가 나오는 키워드로 변경 (예: `['Claude Code', 'Sonnet', 'API', 'prompt caching']`)
-- 또는: API에서 최근 변경된 페이지 타이틀 기반으로 동적 생성
+**개념**: Releasebot처럼 외부에서 구조화된 데이터에 접근할 수 있는 공개 API
 
-### Task C: 검색 UI border 수정
+**구현**:
+1. `src/app/api/v1/changes/route.ts` — 변경사항 조회 API
+   ```
+   GET /api/v1/changes?from=2026-02-20&to=2026-02-27&category=claude-code
+   ```
+   응답:
+   ```json
+   {
+     "changes": [{
+       "id": "...",
+       "title": "Claude Code v2.1.59",
+       "url": "https://code.claude.com/...",
+       "change_type": "modified",
+       "category": "release-notes",
+       "is_silent": false,
+       "is_breaking": false,
+       "summary": "...",
+       "detected_at": "2026-02-26",
+       "diff_url": "/changes/2026-02-26#change-id"
+     }],
+     "meta": { "total": 5, "from": "2026-02-20", "to": "2026-02-27" }
+   }
+   ```
+2. `src/app/api/v1/pages/route.ts` — 추적 중인 페이지 목록
+3. `src/app/api/v1/stats/route.ts` — 통계 (총 페이지수, 변경수 등)
+4. 모든 v1 API에 CORS 헤더, rate limiting 고려
+5. API 문서 페이지: `src/app/api-docs/page.tsx` (간단한 사용법 설명)
 
-- `src/app/search/page.tsx` 113행:
-  ```tsx
-  <div className="relative rounded-xl border-2 border-[var(--border)] ...">
-  ```
-- `border-2` (2px) → `border` (1px)로 변경하여 다른 UI 요소와 통일
-- focus 시 accent 색상 변경은 유지
+### Task E: Webhook & 알림 시스템 강화
 
-### Task D: 마이그레이션 스크립트
+**개념**: Breaking change 감지 시 자동 알림
 
-- 새 카테고리에 맞춰 DB의 `pages.category` 값을 일괄 업데이트
-- `scripts/run-migration.mjs` 참고하여 동일 패턴으로 `scripts/run-migration-004.mjs` 작성
+**구현**:
+1. `src/lib/notifications.ts` 확장 (이미 존재하는 파일)
+   - Discord webhook: breaking change 감지 시 빨간 embed
+   - Slack webhook: 동일
+2. `src/app/api/cron/crawl/route.ts`에서 크롤링 완료 후:
+   - breaking change가 있으면 즉시 알림
+   - 일반 변경은 일일 다이제스트로
+3. 환경변수: `WEBHOOK_DISCORD_URL`, `WEBHOOK_SLACK_URL` (이미 .env.example에 있음)
+
+### Task F: 검색 추천 칩 동적 생성
+
+**개념**: 하드코딩된 추천 칩을 실제 데이터 기반으로 변경
+
+**구현**:
+1. `src/db/queries.ts`에 `getPopularSearchTerms()` 추가
+   - 최근 30일 변경된 페이지의 title에서 자주 등장하는 키워드 추출
+   - 또는 간단하게: 최근 변경된 페이지 title 5개를 추천 칩으로 사용
+2. `src/app/search/page.tsx`에서 API 호출하여 동적 칩 렌더링
+3. 현재 하드코딩된 `SUGGESTION_CHIPS` 제거
+
+### Task G: README.md 리뉴얼
+
+**개념**: 오픈소스 프로젝트로서 매력적인 README로 리뉴얼
+
+**구현**:
+1. README.md에 포함할 내용:
+   - 한 줄 설명 + 뱃지 (TypeScript, MIT, Vercel)
+   - **"Why not Releasebot?"** 또는 **"What makes this different?"** 섹션
+     - "Releasebot tracks announcements. We track actual changes."
+     - "We detect silent changes that never appear in release notes."
+     - "Line-by-line diffs, not just summaries."
+   - 스크린샷 (홈, 캘린더, diff view)
+   - Features 목록 (Silent Change 감지, Breaking Change 경고, 주간 다이제스트, Public API)
+   - Quick Start (로컬 개발 설정)
+   - API 사용법 간단 예시
+   - Contributing 가이드
+   - License
+2. 스크린샷은 나중에 추가할 수 있으니 placeholder로 두어도 됨
 
 ---
 
 ## Phase 3: 검증
 
 1. `npx tsc --noEmit` — TypeScript 에러 0
-2. `npm test` — 모든 테스트 통과 (기존 카테고리 관련 테스트 업데이트 필요)
-3. 이전 카테고리 잔재 확인:
-   ```bash
-   grep -r "agent-tools" src/ --include="*.ts" --include="*.tsx"
-   ```
-   (새 분류에서 사용하지 않는 이전 slug가 남아있으면 안 됨)
-4. `MEMORY.md` 업데이트 (새 카테고리 정보, 변경 이력 반영)
-5. `CLAUDE.md` 현재 상태 요약 섹션 업데이트
+2. `npm test` — 모든 테스트 통과 (새 기능에 대한 테스트도 추가)
+3. 새 API 엔드포인트 동작 확인
+4. 마이그레이션 스크립트 동작 확인
+5. MEMORY.md, CLAUDE.md 업데이트 (v3.0 반영)
+6. TASK.md 삭제 (작업 완료 후)
 
 ---
 
 ## 완료 기준
-- [ ] 카테고리 토론 완료, 결론 문서화
-- [ ] 새 카테고리로 전체 코드 수정
-- [ ] 검색 3건 버그 수정
-- [ ] border UI 통일
-- [ ] 마이그레이션 스크립트 작성
+- [ ] Silent Changes 태깅 구현
+- [ ] Breaking Change 자동 감지
+- [ ] 주간 다이제스트 자동 생성
+- [ ] Public API v1 (changes, pages, stats)
+- [ ] Webhook 알림 강화 (breaking change)
+- [ ] 검색 추천 칩 동적화
+- [ ] README.md 리뉴얼
 - [ ] TypeScript 0 에러 + 테스트 통과
 - [ ] MEMORY.md, CLAUDE.md 업데이트

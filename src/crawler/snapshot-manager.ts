@@ -9,6 +9,7 @@ import {
 import { getDomainFromUrl, getSectionFromUrl } from './sitemap-parser';
 import { generateTextDiff, generateSidebarDiff } from './diff-generator';
 import { generateChangeSummary } from '@/lib/ai-summary';
+import { detectBreakingChange } from '@/lib/breaking-detector';
 import type { CrawlResult } from './page-crawler';
 import type { ChangeType } from '@/db/types';
 
@@ -29,12 +30,14 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
   try {
     const domain = getDomainFromUrl(crawlResult.url);
     const section = getSectionFromUrl(crawlResult.url);
+    const category = getCategoryFromPage(domain, section);
+    const isSilent = category !== 'release-notes';
     const page = await upsertPage({
       url: crawlResult.url,
       domain,
       section,
       title: crawlResult.title,
-      category: getCategoryFromPage(domain, section),
+      category,
     });
 
     const contentHash = computeHash(crawlResult.contentText);
@@ -93,6 +96,8 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
           diff_html: null,
           diff_summary: sidebarSummary,
           detected_at: today,
+          is_silent: isSilent,
+          is_breaking: false,
         });
       }
     }
@@ -106,6 +111,7 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
       } catch {
         // Graceful fallback if API key missing or API fails
       }
+      const { isBreaking } = detectBreakingChange(diffHtml ?? '');
       await insertChange({
         page_id: page.id,
         snapshot_before_id: latestSnapshot?.id ?? null,
@@ -114,6 +120,8 @@ export async function processSnapshot(crawlResult: CrawlResult): Promise<Process
         diff_html: diffHtml,
         diff_summary: changeSummary,
         detected_at: today,
+        is_silent: isSilent,
+        is_breaking: isBreaking,
       });
     }
 

@@ -1,28 +1,39 @@
-# claude-docs-tracker
+# Claude Docs Tracker
 
-> Daily diff tracker for Claude official documentation (platform.claude.com/docs & code.claude.com/docs)
+> Track every change across Claude's documentation — including the ones they don't announce.
 
-Automatically detects and visualizes changes in Claude's official documentation every day. Unlike release notes that only cover major features, this tool tracks **every change** — new pages, content edits, sidebar restructuring, and more.
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)](https://www.typescriptlang.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black)](https://claude-docs-tracker.vercel.app)
 
-## Why?
+**[Live Demo](https://claude-docs-tracker.vercel.app)**
 
-Claude's documentation changes frequently, but many updates go unannounced:
-- New integration guides appear without fanfare
-- API examples get updated silently
-- Sidebar navigation restructures overnight
+## What makes this different?
 
-**claude-docs-tracker** catches it all and presents it in a developer-friendly diff view.
+Services like Releasebot track **official announcements** — the changes vendors *want* you to see.
+
+We track **actual changes** — including the ones that never appear in any changelog.
+
+|  | Releasebot | Claude Docs Tracker |
+|---|---|---|
+| Official release notes | Yes | Yes |
+| Silent documentation changes | No | Yes |
+| Line-by-line diffs | No | Yes |
+| Breaking change detection | No | Yes |
+| Sidebar structure changes | No | Yes |
+| Free & open source | No ($59/mo) | Yes (MIT) |
 
 ## Features
 
-- **Daily Diff Dashboard** — See what changed today at a glance
-- **Page-level Diffs** — Git-style diff view for every documentation page
-- **Sidebar Structure Tracking** — Detect new/removed/moved menu items
-- **AI Summaries** — Bilingual (EN/KR) summaries via Claude Haiku
-- **RSS & JSON Feeds** — Subscribe to documentation changes
-- **Webhook Alerts** — Discord & Slack notifications
-- **Public API** — Query changes programmatically
-- **Dark Mode** — System-aware dark/light theme
+- **Silent Change Detection** — Flag documentation changes that don't appear in any release notes
+- **Breaking Change Alerts** — Auto-detect deprecated APIs, removed features, and migration requirements
+- **Line-by-Line Diffs** — See exactly what changed, word by word
+- **AI-Powered Summaries** — Claude Haiku generates concise summaries for every change
+- **Calendar View** — Browse changes by date with category-colored dots
+- **Full-Text Search** — Find changes by keyword across all tracked pages
+- **RSS & JSON Feeds** — Subscribe in your favorite reader
+- **Discord & Slack Webhooks** — Get notified instantly when breaking changes are detected
+- **Dark Mode** — System-aware dark/light theme with a warm color palette
 
 ## Tech Stack
 
@@ -30,21 +41,22 @@ Claude's documentation changes frequently, but many updates go unannounced:
 |------|-----------|
 | Framework | Next.js 14+ (App Router) |
 | Language | TypeScript (strict) |
-| Styling | Tailwind CSS |
+| Styling | Tailwind CSS v4 |
 | Database | Supabase (PostgreSQL) |
 | Diff Engine | jsdiff |
 | AI Summaries | Claude Haiku 4.5 |
-| Deploy | Vercel |
+| Deployment | Vercel |
 | Scheduler | Vercel Cron |
+| Tests | Jest + ts-jest |
 
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
 - npm
-- [Supabase](https://supabase.com) project
-- [Anthropic API key](https://console.anthropic.com)
+- A [Supabase](https://supabase.com) project
+- An [Anthropic API key](https://console.anthropic.com)
 
 ### Setup
 
@@ -56,27 +68,36 @@ cd claude-docs-tracker
 npm install
 ```
 
-2. Configure environment:
+2. Configure environment variables:
 
 ```bash
 cp .env.example .env.local
-# Fill in your credentials (see Environment Variables below)
 ```
 
-3. Set up database:
+Edit `.env.local` and fill in your credentials:
 
-Run the migration SQL in your Supabase SQL Editor:
+```
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+CLAUDE_API_KEY=
+CRON_SECRET=
+WEBHOOK_DISCORD_URL=       # optional
+WEBHOOK_SLACK_URL=         # optional
+NEXT_PUBLIC_SITE_URL=      # optional, defaults to Vercel URL
+```
+
+3. Set up the database:
+
+Run the migration files in your Supabase SQL Editor in order:
+
 ```
 supabase/migrations/001_initial_schema.sql
+supabase/migrations/003_add_category.sql
+supabase/migrations/004_update_categories.sql
 ```
 
-4. (Optional) Seed demo data:
-
-```bash
-npx tsx scripts/seed-demo-data.ts
-```
-
-5. Start development server:
+4. Start the development server:
 
 ```bash
 npm run dev
@@ -84,9 +105,32 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Running the Crawler
+## API Usage
 
-Manual crawl (requires `CRON_SECRET`):
+### Get changes for a specific date
+
+```bash
+curl https://claude-docs-tracker.vercel.app/api/changes?date=2026-02-26
+```
+
+### Get the latest changes
+
+```bash
+curl https://claude-docs-tracker.vercel.app/api/changes/latest
+```
+
+### Search changes by keyword
+
+```bash
+curl https://claude-docs-tracker.vercel.app/api/changes?q=deprecated
+```
+
+### Subscribe via feeds
+
+- **RSS**: `https://claude-docs-tracker.vercel.app/api/feed/rss`
+- **JSON Feed**: `https://claude-docs-tracker.vercel.app/api/feed/json`
+
+### Trigger a manual crawl (requires authentication)
 
 ```bash
 curl -X POST http://localhost:3000/api/crawl \
@@ -94,61 +138,37 @@ curl -X POST http://localhost:3000/api/crawl \
   -H "Content-Type: application/json"
 ```
 
-Dry run (list URLs without crawling):
-
-```bash
-curl -X POST http://localhost:3000/api/crawl \
-  -H "Authorization: Bearer YOUR_CRON_SECRET" \
-  -H "Content-Type: application/json" \
-  -d '{"dryRun": true}'
-```
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/changes?date=YYYY-MM-DD` | Changes for a specific date |
-| GET | `/api/changes/latest` | Latest 50 changes |
-| GET | `/api/changes/page/:pageId` | Change history for a page |
-| GET | `/api/sidebar-diff?from=...&to=...` | Sidebar structure changes |
-| GET | `/api/feed/rss` | RSS 2.0 feed |
-| GET | `/api/feed/json` | JSON Feed 1.1 |
-| POST | `/api/crawl` | Trigger manual crawl (auth required) |
-
 ## Project Structure
 
 ```
 claude-docs-tracker/
 ├── src/
 │   ├── app/              # Next.js App Router pages & API routes
-│   ├── components/       # UI components (DiffView, ChangeCard, etc.)
+│   │   ├── api/          # REST endpoints (calendar, changes, crawl, cron, feed)
+│   │   ├── calendar/     # Calendar view page
+│   │   ├── changes/      # Daily change detail page ([date] dynamic)
+│   │   ├── search/       # Full-text search page
+│   │   └── page.tsx      # Home (stats + activity dot strip + recent changes)
+│   ├── components/       # Shared UI components
 │   ├── crawler/          # Crawling engine (sitemap, page, diff, pipeline)
 │   ├── db/               # Supabase client, types, queries
-│   └── lib/              # AI summary, notifications
-├── supabase/migrations/  # Database schema
-├── scripts/              # Seed data, utilities
-└── tests/                # Unit & integration tests
+│   └── lib/              # Utilities (categories, icons, formatters)
+├── scripts/              # Crawling & migration scripts
+├── supabase/migrations/  # Database schema migrations
+├── tests/                # Unit tests (Jest)
+└── public/               # Static assets
 ```
 
-## Environment Variables
+## Categories
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SUPABASE_URL` | Yes | Supabase project URL |
-| `SUPABASE_ANON_KEY` | Yes | Supabase anonymous key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Yes | Supabase service role key |
-| `CLAUDE_API_KEY` | Yes | Anthropic API key for AI summaries |
-| `CRON_SECRET` | Yes | Auth token for cron/crawl endpoints |
-| `NEXT_PUBLIC_SITE_URL` | No | Public URL (defaults to Vercel URL) |
-| `WEBHOOK_DISCORD_URL` | No | Discord webhook for notifications |
-| `WEBHOOK_SLACK_URL` | No | Slack webhook for notifications |
+Changes are automatically classified into four categories:
 
-## Deploying to Vercel
-
-1. Push to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Add environment variables in Vercel dashboard
-4. Deploy — cron job runs automatically at UTC 00:00 (KST 09:00)
+| Category | Scope | Color |
+|----------|-------|-------|
+| Platform Docs | API guides, getting started, build with Claude | Purple |
+| Claude Code | code.claude.com — overview, quickstart, IDE integrations | Blue |
+| Agents & MCP | Agent SDK, tools, MCP connector | Green |
+| Release Notes | Official release notes and changelogs | Amber |
 
 ## Contributing
 
@@ -157,7 +177,10 @@ Contributions are welcome! Please:
 1. Fork the repository
 2. Create a feature branch (`feat/your-feature`)
 3. Follow [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
-4. Submit a pull request
+4. Ensure all tests pass (`npm test`)
+5. Submit a pull request
+
+See [CLAUDE.md](CLAUDE.md) for detailed code style and commit conventions.
 
 ## License
 

@@ -122,15 +122,19 @@ claude-docs-tracker/
 └── README.md             # 프로젝트 소개
 ```
 
-## 현재 상태 요약 (2026-02-27)
+## 현재 상태 요약 (2026-02-27, v3.0)
 
 - 네비: Home / Calendar / Search (3개)
 - 카테고리: platform-docs / claude-code / agents-mcp / release-notes (4개, SVG 아이콘)
 - 홈페이지: 인라인 스탯 + Activity Dot Strip + Recent Changes
-- DB: 147 pages, 16 changes (초기 크롤링 데이터 삭제 후 실제 변경만)
-- 삭제된 페이지: /sidebar-diff, /changes (redirect)
-- 모든 스탯은 daily_reports 미사용, changes 테이블 직접 집계
-- 크롤러: diff_summary에 AI 요약 자동 생성 (CLAUDE_API_KEY 없으면 graceful null fallback)
+- DB: 147 pages, changes 테이블에 is_silent + is_breaking 플래그 추가
+- Silent Change 감지: release-notes 아닌 변경 자동 태깅
+- Breaking Change 감지: diff 추가분 키워드 스캔 (12개 키워드)
+- 주간 다이제스트: 매주 월 09:00 UTC 크론, 변경 없으면 스킵
+- Public API v1: /api/v1/changes, /pages, /stats (CORS, 캐시)
+- Webhook: breaking change 시 Discord/Slack 즉시 알림
+- 검색 칩: 동적 생성 (/api/changes/suggestions)
+- 크롤러: diff_summary AI 요약 + breaking 감지 + silent 태깅 자동
 
 ## 작업 시작 전 필수 확인
 

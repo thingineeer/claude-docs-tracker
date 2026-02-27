@@ -9,7 +9,7 @@
 - **설명**: Claude 공식 문서의 일일 변경사항을 추적하는 웹 서비스
 - **소유자**: thingineeer
 - **GitHub**: https://github.com/thingineeer/claude-docs-tracker
-- **상태**: v2.1 카테고리 재설계 + 검색 버그 수정 완료
+- **상태**: v3.0 경쟁사 분석 기반 성장 기능 구현 완료
 - **Production URL**: https://claude-docs-tracker.vercel.app
 - **라이선스**: MIT
 - **공개 여부**: public 오픈소스 (처음부터)
@@ -24,7 +24,7 @@
 - Diff: jsdiff
 - AI: Claude Haiku 4.5 API
 - Deploy: Vercel (GitHub 자동 배포, main push 시 프로덕션)
-- Test: Jest + ts-jest (80개 테스트)
+- Test: Jest + ts-jest (89개 테스트, 8 suites)
 
 ## 현재 페이지 구조 (v1.3)
 
@@ -111,16 +111,50 @@
 - `UX-IMPROVEMENT-REPORT.md` — 프로세스 산출물
 - `CALENDAR_FEATURE_PROMPT.md` — 프로세스 산출물
 
+## v3.0 신규 기능 (2026-02-27)
+
+### Silent Changes 감지
+- changes 테이블에 `is_silent` boolean 추가
+- release-notes 카테고리가 아닌 변경 = silent로 태깅
+- change-card에 "Silent Change" 뱃지 표시
+
+### Breaking Change 자동 감지
+- `src/lib/breaking-detector.ts`: diff 추가분에서 12개 키워드 스캔
+- changes 테이블에 `is_breaking` boolean 추가
+- change-card에 빨간 "Breaking" 뱃지 표시
+- 테스트: 9개 (tests/breaking-detector.test.ts)
+
+### 주간 다이제스트
+- `src/lib/weekly-digest.ts`: 지난 7일 변경 집계 + AI 요약
+- `/api/cron/digest`: 매주 월요일 09:00 UTC 크론
+- 변경 0건이면 스킵 (API 비용 절약)
+
+### Public API v1
+- `/api/v1/changes?from=&to=&category=&limit=` — 변경사항 조회
+- `/api/v1/pages?category=&domain=` — 추적 페이지 목록
+- `/api/v1/stats` — 통계 (페이지수, 변경수, 카테고리 분포)
+- 모든 엔드포인트 CORS 활성화, 캐시 적용
+
+### Webhook 강화
+- `sendBreakingChangeAlert()`: breaking change 감지 시 즉시 Discord/Slack 알림
+- Discord: 빨간 embed, Slack: 빨간 사이드바 attachment
+- pipeline.ts에서 크롤링 완료 후 자동 호출
+
+### 검색 추천 칩 동적화
+- `/api/changes/suggestions`: 최근 변경 페이지 타이틀 기반
+- search/page.tsx에서 API 호출, 하드코딩 제거
+- fallback: ['Claude Code', 'API', 'prompt', 'model']
+
 ## DB 상태
 
 - pages: 147개
 - changes: 16개 (초기 크롤링 137건 삭제 후 실제 변경만)
-- 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename)
+- 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename), 005(silent+breaking flags)
 
 ## 빌드 상태
 
 - TypeScript: 0 에러
-- Tests: 80/80 통과 (7 suites)
+- Tests: 89/89 통과 (8 suites)
 - 마지막 확인: 2026-02-27
 
 ## QA 수정 이력 (v1.3.1 — 2026-02-26)

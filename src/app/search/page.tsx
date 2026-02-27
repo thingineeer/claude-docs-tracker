@@ -14,8 +14,6 @@ interface SearchResult {
   pages: { title: string; url: string } | null;
 }
 
-const SUGGESTION_CHIPS = ['Claude Code', 'API', 'prompt', 'model'];
-
 /**
  * XSS-safe keyword highlighting.
  * Splits text by the query and wraps matching segments in styled spans.
@@ -56,6 +54,7 @@ function SearchContent() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [suggestionChips, setSuggestionChips] = useState<string[]>([]);
 
   const performSearch = useCallback(async (q: string) => {
     if (!q.trim()) return;
@@ -84,6 +83,13 @@ function SearchContent() {
   useEffect(() => {
     const input = document.querySelector<HTMLInputElement>('input[data-search-input]');
     input?.focus();
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/changes/suggestions')
+      .then(res => res.json())
+      .then(data => setSuggestionChips(data.suggestions ?? []))
+      .catch(() => setSuggestionChips(['Claude Code', 'API', 'prompt', 'model']));
   }, []);
 
   function handleSubmit(e: React.FormEvent) {
@@ -175,7 +181,7 @@ function SearchContent() {
             No results found for &quot;{activeQuery}&quot;
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
-            {SUGGESTION_CHIPS.map((chip) => (
+            {suggestionChips.map((chip) => (
               <button
                 key={chip}
                 type="button"
@@ -200,7 +206,7 @@ function SearchContent() {
           </p>
           <div className="flex flex-wrap justify-center gap-2">
             <span className="text-xs text-[var(--muted)]/60 mr-1 self-center">Try:</span>
-            {SUGGESTION_CHIPS.map((chip) => (
+            {suggestionChips.map((chip) => (
               <button
                 key={chip}
                 type="button"
