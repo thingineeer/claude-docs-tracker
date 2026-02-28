@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLatestChanges } from '@/db/queries';
+import { getCategoryForPage } from '@/lib/categories';
 import { apiInternalError } from '@/lib/api-error';
 
 export async function GET() {
@@ -9,11 +10,36 @@ export async function GET() {
 
     const items = changes
       .map((change) => {
-        const page = change.pages as { title: string; url: string } | null;
+        const page = change.pages as { title: string; url: string; domain?: string; section?: string | null } | null;
+        const pageTitle = page?.title ?? 'Unknown';
+        const breakingPrefix = change.is_breaking ? '[BREAKING] ' : '';
+        const title = `${breakingPrefix}${pageTitle} (${change.change_type})`;
+
+        const descriptionParts: string[] = [];
+        if (change.diff_summary) {
+          descriptionParts.push(change.diff_summary);
+        } else {
+          descriptionParts.push(`Page ${change.change_type}`);
+        }
+        if (change.is_silent) {
+          descriptionParts.push('(silent change)');
+        }
+        const description = descriptionParts.join(' ');
+
+        // Determine category from page data
+        const domain = page?.domain ?? 'unknown';
+        const section = page?.section ?? null;
+        const category = getCategoryForPage(domain, section);
+
+        const changesPageLink = `${siteUrl}/changes/${change.detected_at}`;
+
         return `    <item>
-      <title>${escapeXml(page?.title ?? 'Unknown')} (${change.change_type})</title>
+      <title>${escapeXml(title)}</title>
       <link>${escapeXml(page?.url ?? siteUrl)}</link>
-      <description>${escapeXml(change.diff_summary ?? `Page ${change.change_type}`)}</description>
+      <description>${escapeXml(description)}
+
+View all changes for this day: ${escapeXml(changesPageLink)}</description>
+      <category>${escapeXml(category)}</category>
       <pubDate>${new Date(change.created_at).toUTCString()}</pubDate>
       <guid>${siteUrl}/changes/${change.detected_at}#${change.id}</guid>
     </item>`;
@@ -25,7 +51,7 @@ export async function GET() {
   <channel>
     <title>Claude Patch Notes</title>
     <link>${siteUrl}</link>
-    <description>Daily changes in Claude official documentation</description>
+    <description>Official releases and undocumented changes to Claude's APIs, tools, and documentation</description>
     <language>en</language>
     <atom:link href="${siteUrl}/api/feed/rss" rel="self" type="application/rss+xml"/>
 ${items}

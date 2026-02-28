@@ -92,10 +92,18 @@ export default async function ChangesDatePage({ params }: PageProps) {
     }
   })();
 
+  const breakingChanges = changes.filter((c) => c.is_breaking);
   const newPages = changes.filter((c) => c.change_type === 'added');
   const modifiedPages = changes.filter((c) => c.change_type === 'modified');
   const removedPages = changes.filter((c) => c.change_type === 'removed');
   const sidebarChanges = changes.filter((c) => c.change_type === 'sidebar_changed');
+
+  // Build summary parts
+  const summaryParts: string[] = [];
+  if (newPages.length > 0) summaryParts.push(`${newPages.length} new ${newPages.length === 1 ? 'page' : 'pages'}`);
+  if (modifiedPages.length > 0) summaryParts.push(`${modifiedPages.length} ${modifiedPages.length === 1 ? 'modification' : 'modifications'}`);
+  if (removedPages.length > 0) summaryParts.push(`${removedPages.length} ${removedPages.length === 1 ? 'removal' : 'removals'}`);
+  if (sidebarChanges.length > 0) summaryParts.push(`${sidebarChanges.length} sidebar ${sidebarChanges.length === 1 ? 'change' : 'changes'}`);
 
   return (
     <div className="space-y-8">
@@ -135,6 +143,38 @@ export default async function ChangesDatePage({ params }: PageProps) {
         </div>
       ) : (
         <>
+          {/* Page summary */}
+          <p className="text-sm text-[var(--muted)]">
+            {changes.length} {changes.length === 1 ? 'change' : 'changes'} detected — {summaryParts.join(', ')}
+          </p>
+
+          {/* Breaking Changes banner */}
+          {breakingChanges.length > 0 && (
+            <section className="rounded-xl border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4">
+              <h2 className="text-lg font-semibold mb-3 text-red-600 dark:text-red-400 flex items-center gap-2">
+                <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+                Breaking {breakingChanges.length === 1 ? 'Change' : 'Changes'}
+              </h2>
+              <ul className="space-y-2">
+                {breakingChanges.map((change) => {
+                  const page = change.pages as { title: string; url: string } | null;
+                  return (
+                    <li key={change.id} className="ml-7">
+                      <span className="font-medium text-sm">{page?.title ?? 'Unknown'}</span>
+                      {change.diff_summary && (
+                        <p className="text-sm text-red-700/80 dark:text-red-300/70 mt-0.5">{change.diff_summary}</p>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
           {newPages.length > 0 && (
             <section>
               <h2 className="text-lg font-semibold mb-3 text-green-600 flex items-center gap-2">
@@ -145,16 +185,25 @@ export default async function ChangesDatePage({ params }: PageProps) {
                 {newPages.map((change) => {
                   const page = change.pages as { title: string; url: string } | null;
                   return (
-                    <ChangeCard
-                      key={change.id}
-                      title={page?.title ?? 'Unknown'}
-                      url={page?.url ?? '#'}
-                      changeType={change.change_type as ChangeType}
-                      summary={change.diff_summary}
-                      diffHtml={change.diff_html}
-                      detectedAt={change.detected_at}
-                      createdAt={change.created_at}
-                    />
+                    <div key={change.id}>
+                      <ChangeCard
+                        title={page?.title ?? 'Unknown'}
+                        url={page?.url ?? '#'}
+                        changeType={change.change_type as ChangeType}
+                        summary={change.diff_summary}
+                        diffHtml={change.diff_html}
+                        detectedAt={change.detected_at}
+                        createdAt={change.created_at}
+                        isSilent={change.is_silent}
+                        isBreaking={change.is_breaking}
+                      />
+                      {change.is_silent && (
+                        <p className="text-xs italic text-[var(--muted)] mt-1 ml-4">Silent — not in official release notes</p>
+                      )}
+                      {change.diff_summary && (
+                        <p className="text-sm text-[var(--muted)] mt-1 ml-4">{change.diff_summary}</p>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -171,16 +220,25 @@ export default async function ChangesDatePage({ params }: PageProps) {
                 {modifiedPages.map((change) => {
                   const page = change.pages as { title: string; url: string } | null;
                   return (
-                    <ChangeCard
-                      key={change.id}
-                      title={page?.title ?? 'Unknown'}
-                      url={page?.url ?? '#'}
-                      changeType={change.change_type as ChangeType}
-                      summary={change.diff_summary}
-                      diffHtml={change.diff_html}
-                      detectedAt={change.detected_at}
-                      createdAt={change.created_at}
-                    />
+                    <div key={change.id}>
+                      <ChangeCard
+                        title={page?.title ?? 'Unknown'}
+                        url={page?.url ?? '#'}
+                        changeType={change.change_type as ChangeType}
+                        summary={change.diff_summary}
+                        diffHtml={change.diff_html}
+                        detectedAt={change.detected_at}
+                        createdAt={change.created_at}
+                        isSilent={change.is_silent}
+                        isBreaking={change.is_breaking}
+                      />
+                      {change.is_silent && (
+                        <p className="text-xs italic text-[var(--muted)] mt-1 ml-4">Silent — not in official release notes</p>
+                      )}
+                      {change.diff_summary && (
+                        <p className="text-sm text-[var(--muted)] mt-1 ml-4">{change.diff_summary}</p>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -197,16 +255,25 @@ export default async function ChangesDatePage({ params }: PageProps) {
                 {removedPages.map((change) => {
                   const page = change.pages as { title: string; url: string } | null;
                   return (
-                    <ChangeCard
-                      key={change.id}
-                      title={page?.title ?? 'Unknown'}
-                      url={page?.url ?? '#'}
-                      changeType={change.change_type as ChangeType}
-                      summary={change.diff_summary}
-                      diffHtml={change.diff_html}
-                      detectedAt={change.detected_at}
-                      createdAt={change.created_at}
-                    />
+                    <div key={change.id}>
+                      <ChangeCard
+                        title={page?.title ?? 'Unknown'}
+                        url={page?.url ?? '#'}
+                        changeType={change.change_type as ChangeType}
+                        summary={change.diff_summary}
+                        diffHtml={change.diff_html}
+                        detectedAt={change.detected_at}
+                        createdAt={change.created_at}
+                        isSilent={change.is_silent}
+                        isBreaking={change.is_breaking}
+                      />
+                      {change.is_silent && (
+                        <p className="text-xs italic text-[var(--muted)] mt-1 ml-4">Silent — not in official release notes</p>
+                      )}
+                      {change.diff_summary && (
+                        <p className="text-sm text-[var(--muted)] mt-1 ml-4">{change.diff_summary}</p>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -223,16 +290,25 @@ export default async function ChangesDatePage({ params }: PageProps) {
                 {sidebarChanges.map((change) => {
                   const page = change.pages as { title: string; url: string } | null;
                   return (
-                    <ChangeCard
-                      key={change.id}
-                      title={page?.title ?? 'Unknown'}
-                      url={page?.url ?? '#'}
-                      changeType={change.change_type as ChangeType}
-                      summary={change.diff_summary}
-                      diffHtml={change.diff_html}
-                      detectedAt={change.detected_at}
-                      createdAt={change.created_at}
-                    />
+                    <div key={change.id}>
+                      <ChangeCard
+                        title={page?.title ?? 'Unknown'}
+                        url={page?.url ?? '#'}
+                        changeType={change.change_type as ChangeType}
+                        summary={change.diff_summary}
+                        diffHtml={change.diff_html}
+                        detectedAt={change.detected_at}
+                        createdAt={change.created_at}
+                        isSilent={change.is_silent}
+                        isBreaking={change.is_breaking}
+                      />
+                      {change.is_silent && (
+                        <p className="text-xs italic text-[var(--muted)] mt-1 ml-4">Silent — not in official release notes</p>
+                      )}
+                      {change.diff_summary && (
+                        <p className="text-sm text-[var(--muted)] mt-1 ml-4">{change.diff_summary}</p>
+                      )}
+                    </div>
                   );
                 })}
               </div>

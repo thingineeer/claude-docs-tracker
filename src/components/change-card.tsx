@@ -95,7 +95,12 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
   })();
 
   return (
-    <div className="rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/20 transition-all duration-200 p-4">
+    <div className={`rounded-xl border border-[var(--border)] hover:border-[var(--accent)]/20 transition-all duration-200 p-4 ${
+      isBreaking ? 'border-l-4 border-l-red-500' :
+      changeType === 'added' ? 'border-l-4 border-l-green-500' :
+      changeType === 'modified' ? 'border-l-4 border-l-blue-500' :
+      changeType === 'removed' ? 'border-l-4 border-l-red-500' : ''
+    }`}>
       {/* Row 1: category dot + title + time */}
       <div className="flex items-center gap-2 mb-1">
         <span
@@ -120,7 +125,7 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
 
       {/* Row 3: summary */}
       {(highlightedSummary || summary) && (
-        <p className="text-sm text-muted mt-1 ml-4 line-clamp-1">{highlightedSummary ?? summary}</p>
+        <p className="text-sm text-muted mt-1 ml-4 line-clamp-3">{highlightedSummary ?? summary}</p>
       )}
 
       {/* Row 4: change type + badges + show diff */}
@@ -130,13 +135,13 @@ export function ChangeCard({ title, url, changeType, summary, diffHtml, detected
           {config.label}
         </span>
         {isBreaking && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-600 text-white">
+          <span className="inline-flex items-center bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 font-semibold px-2 py-0.5 rounded-md text-xs">
             Breaking
           </span>
         )}
         {isSilent && (
-          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-            Silent
+          <span className="text-xs text-muted italic">
+            Not in official release notes
           </span>
         )}
         {diffHtml && (

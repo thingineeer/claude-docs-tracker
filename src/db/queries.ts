@@ -363,5 +363,37 @@ export async function updateChange(
   if (error) throw error;
 }
 
+export async function getRecentBreakingChanges(days = 7) {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const dateStr = since.toISOString().split('T')[0];
+
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('id, change_type, detected_at, diff_summary, is_breaking, is_silent, pages(id, url, title, domain, section)')
+    .eq('is_breaking', true)
+    .gte('detected_at', dateStr)
+    .order('detected_at', { ascending: false });
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getThisWeekChanges(limit = 20) {
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+  const dateStr = since.toISOString().split('T')[0];
+
+  const { data, error } = await getSupabaseAdmin()
+    .from('changes')
+    .select('id, change_type, detected_at, diff_summary, is_breaking, is_silent, snapshot_before_id, snapshot_after_id, diff_html, created_at, pages(id, url, title, domain, section)')
+    .gte('detected_at', dateStr)
+    .order('detected_at', { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility
 export { getCategoryForPage as getCategoryFromPage } from '@/lib/categories';

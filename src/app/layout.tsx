@@ -20,10 +20,10 @@ export const metadata: Metadata = {
     default: 'Claude Patch Notes',
     template: '%s | Claude Patch Notes',
   },
-  description: 'Every change to Claude\'s docs — including the silent ones',
+  description: 'Official releases and undocumented changes to Claude\'s APIs, tools, and documentation. Breaking changes, silent updates, and weekly digests — all in one place.',
   openGraph: {
     title: 'Claude Patch Notes',
-    description: 'Every change to Claude\'s docs — including the silent ones',
+    description: 'Official releases and undocumented changes to Claude\'s APIs, tools, and documentation. Breaking changes, silent updates, and weekly digests — all in one place.',
     url: 'https://claude-docs-tracker.vercel.app',
     siteName: 'Claude Patch Notes',
     type: 'website',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary',
     title: 'Claude Patch Notes',
-    description: 'Every change to Claude\'s docs — including the silent ones',
+    description: 'Official releases and undocumented changes to Claude\'s APIs, tools, and documentation. Breaking changes, silent updates, and weekly digests — all in one place.',
   },
   metadataBase: new URL('https://claude-docs-tracker.vercel.app'),
 };
