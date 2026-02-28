@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getLatestChanges } from '@/db/queries';
+import { getCategoryForPage } from '@/lib/categories';
 import { apiInternalError } from '@/lib/api-error';
 
 export async function GET() {
@@ -12,16 +13,40 @@ export async function GET() {
       title: 'Claude Patch Notes',
       home_page_url: siteUrl,
       feed_url: `${siteUrl}/api/feed/json`,
-      description: 'Daily changes in Claude official documentation',
+      description: 'Official releases and undocumented changes to Claude\'s APIs, tools, and documentation',
       items: changes.map((change) => {
-        const page = change.pages as { title: string; url: string } | null;
+        const page = change.pages as { title: string; url: string; domain?: string; section?: string | null } | null;
+        const pageTitle = page?.title ?? 'Unknown';
+        const breakingPrefix = change.is_breaking ? '[BREAKING] ' : '';
+        const title = `${breakingPrefix}${pageTitle} (${change.change_type})`;
+
+        // Build content text
+        const contentParts: string[] = [];
+        if (change.diff_summary) {
+          contentParts.push(change.diff_summary);
+        } else {
+          contentParts.push(`Page ${change.change_type}`);
+        }
+        if (change.is_silent) {
+          contentParts.push('(silent change)');
+        }
+        const contentText = contentParts.join(' ');
+
+        // Determine category from page data
+        const domain = page?.domain ?? 'unknown';
+        const section = page?.section ?? null;
+        const category = getCategoryForPage(domain, section);
+
         return {
           id: change.id,
-          title: `${page?.title ?? 'Unknown'} (${change.change_type})`,
+          title,
           url: page?.url ?? siteUrl,
-          content_text: change.diff_summary ?? `Page ${change.change_type}`,
+          external_url: `${siteUrl}/changes/${change.detected_at}`,
+          content_text: contentText,
           date_published: change.created_at,
-          tags: [change.change_type],
+          tags: [change.change_type, category],
+          _breaking: change.is_breaking,
+          _silent: change.is_silent,
         };
       }),
     };
