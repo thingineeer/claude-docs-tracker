@@ -1,7 +1,7 @@
 import { fetchSitemapUrls, getDomainFromUrl, getSectionFromUrl, type SitemapEntry } from './sitemap-parser';
 import { crawlPages } from './page-crawler';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
-import { processGitHubReleases, detectUnpublishedReleases, fetchGitHubReleases, releaseToCrawlResult, type GitHubReleaseSummary } from './github-releases-crawler';
+import { processGitHubReleases, detectUnpublishedReleases, releaseToCrawlResult, type GitHubReleaseSummary } from './github-releases-crawler';
 import { processAnthropicNews } from './anthropic-news-crawler';
 import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange, upsertPage, getPageByUrl, updatePageLastmod, getCategoryFromPage } from '@/db/queries';
 import { sendBreakingChangeAlert, type BreakingChangeInfo } from '@/lib/notifications';
@@ -143,9 +143,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
       githubResults = githubSummary.results;
       console.log(`[pipeline] GitHub: ${githubSummary.newReleases} new, ${githubSummary.modifiedReleases} modified, ${githubSummary.unchangedReleases} unchanged, ${githubSummary.errors} errors`);
 
-      const releases = await fetchGitHubReleases();
-      const releaseUrls = releases.map((r) => r.html_url);
-      githubRemovedCount = await detectUnpublishedReleases(releaseUrls);
+      githubRemovedCount = await detectUnpublishedReleases(githubSummary.releaseUrls);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       githubError = errorMessage;
@@ -158,7 +156,13 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
   if (!skipAnthropicNews && !dryRun && !customUrls) {
     try {
       console.log('[pipeline] Processing Anthropic news...');
-      anthropicNewsResults = await processAnthropicNews();
+      const newsTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Anthropic news crawl timeout after 45s')), 45000)
+      );
+      anthropicNewsResults = await Promise.race([
+        processAnthropicNews(),
+        newsTimeout,
+      ]) as ProcessResult[];
     } catch (error) {
       console.error('[pipeline] Anthropic news phase failed (other results preserved):', error);
     }
@@ -168,9 +172,10 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
 
   // Step 4: Detect stale (removed) pages
   // Use all sitemap URLs (SSR + CSR) for stale detection
+  // Skip when maxPages is set to avoid false-positive removals
   const allSitemapUrls = sitemapEntries.map((e) => e.url);
   let removedCount = 0;
-  if (!customUrls) {
+  if (!customUrls && !maxPages) {
     removedCount = await detectRemovedPages(allSitemapUrls);
   }
 

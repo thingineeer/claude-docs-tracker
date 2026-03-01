@@ -100,6 +100,7 @@ export interface GitHubReleaseSummary {
   unchangedReleases: number;
   errors: number;
   results: ProcessResult[];
+  releaseUrls: string[];
 }
 
 export async function processGitHubReleases(): Promise<GitHubReleaseSummary> {
@@ -125,6 +126,7 @@ export async function processGitHubReleases(): Promise<GitHubReleaseSummary> {
     unchangedReleases: results.filter((r) => r.status === 'unchanged').length,
     errors: results.filter((r) => r.status === 'error').length,
     results,
+    releaseUrls: releases.map((r) => r.html_url),
   };
 }
 
