@@ -1,7 +1,7 @@
 import { fetchSitemapUrls } from './sitemap-parser';
 import { crawlPages } from './page-crawler';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
-import { processGitHubReleases, detectUnpublishedReleases, fetchGitHubReleases, releaseToCrawlResult } from './github-releases-crawler';
+import { processGitHubReleases, detectUnpublishedReleases, fetchGitHubReleases, releaseToCrawlResult, type GitHubReleaseSummary } from './github-releases-crawler';
 import { processAnthropicNews } from './anthropic-news-crawler';
 import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange } from '@/db/queries';
 import { sendBreakingChangeAlert, type BreakingChangeInfo } from '@/lib/notifications';
@@ -25,6 +25,8 @@ export interface PipelineResult {
   errors: number;
   githubReleases: number;
   anthropicNews: number;
+  duration: string;
+  githubError?: string;
   results: ProcessResult[];
   breakingChanges?: Array<{
     pageTitle: string;
@@ -37,6 +39,7 @@ export interface PipelineResult {
 export async function runPipeline(options: PipelineOptions = {}): Promise<PipelineResult> {
   const { dryRun = false, maxPages, urls: customUrls, skipGitHub = false, skipAnthropicNews = false } = options;
 
+  const pipelineStart = Date.now();
   console.log('[pipeline] Starting crawl pipeline...');
 
   // Step 1: Get URLs
@@ -68,6 +71,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
       errors: 0,
       githubReleases: 0,
       anthropicNews: 0,
+      duration: `${((Date.now() - pipelineStart) / 1000).toFixed(1)}s`,
       results: [],
     };
   }
@@ -96,14 +100,26 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
   // Phase 2: GitHub Releases
   let githubResults: ProcessResult[] = [];
   let githubRemovedCount = 0;
+  let githubError: string | undefined;
   if (!skipGitHub && !dryRun && !customUrls) {
     try {
       console.log('[pipeline] Processing GitHub releases...');
-      githubResults = await processGitHubReleases();
+      const githubTimeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('GitHub crawl timeout after 45s')), 45000)
+      );
+      const githubSummary = await Promise.race([
+        processGitHubReleases(),
+        githubTimeout,
+      ]) as GitHubReleaseSummary;
+      githubResults = githubSummary.results;
+      console.log(`[pipeline] GitHub: ${githubSummary.newReleases} new, ${githubSummary.modifiedReleases} modified, ${githubSummary.unchangedReleases} unchanged, ${githubSummary.errors} errors`);
+
       const releases = await fetchGitHubReleases();
       const releaseUrls = releases.map((r) => r.html_url);
       githubRemovedCount = await detectUnpublishedReleases(releaseUrls);
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      githubError = errorMessage;
       console.error('[pipeline] GitHub releases phase failed (sitemap results preserved):', error);
     }
   }
@@ -128,6 +144,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
   }
 
   // Step 5: Generate daily report
+  const elapsed = ((Date.now() - pipelineStart) / 1000).toFixed(1);
   const summary: PipelineResult = {
     totalUrls: urls.length + githubResults.length + anthropicNewsResults.length,
     crawled: crawlResults.length + githubResults.length + anthropicNewsResults.length,
@@ -138,6 +155,8 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     errors: allResults.filter((r) => r.status === 'error').length,
     githubReleases: githubResults.filter((r) => r.status !== 'unchanged').length,
     anthropicNews: anthropicNewsResults.filter((r) => r.status !== 'unchanged').length,
+    duration: `${elapsed}s`,
+    ...(githubError ? { githubError } : {}),
     results: allResults,
   };
 
@@ -172,7 +191,7 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     await sendBreakingChangeAlert(breakingChanges);
   }
 
-  console.log('[pipeline] Complete!');
+  console.log(`[pipeline] Complete in ${elapsed}s`);
   console.log(`  New: ${summary.newPages}, Modified: ${summary.modifiedPages}, Removed: ${summary.removedPages}, Unchanged: ${summary.unchanged}, Errors: ${summary.errors}`);
 
   return summary;

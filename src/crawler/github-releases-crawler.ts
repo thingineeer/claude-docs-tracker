@@ -35,6 +35,7 @@ export async function fetchGitHubReleases(): Promise<GitHubRelease[]> {
   }
 
   const allReleases: GitHubRelease[] = [];
+  let draftsFiltered = 0;
   const maxPages = 10;
 
   for (let page = 1; page <= maxPages; page++) {
@@ -67,6 +68,8 @@ export async function fetchGitHubReleases(): Promise<GitHubRelease[]> {
 
     if (!releases || releases.length === 0) break;
 
+    const draftCount = releases.filter((r) => r.draft).length;
+    draftsFiltered += draftCount;
     const nonDraftReleases = releases.filter((r) => !r.draft);
     allReleases.push(...nonDraftReleases);
 
@@ -74,6 +77,8 @@ export async function fetchGitHubReleases(): Promise<GitHubRelease[]> {
 
     if (page < maxPages) await sleep(1000); // rate limit delay
   }
+
+  console.log(`[github] Fetched ${allReleases.length} published releases (${draftsFiltered} drafts filtered)`);
 
   return allReleases;
 }
@@ -88,7 +93,16 @@ export function releaseToCrawlResult(release: GitHubRelease): CrawlResult {
   };
 }
 
-export async function processGitHubReleases(): Promise<ProcessResult[]> {
+export interface GitHubReleaseSummary {
+  totalFetched: number;
+  newReleases: number;
+  modifiedReleases: number;
+  unchangedReleases: number;
+  errors: number;
+  results: ProcessResult[];
+}
+
+export async function processGitHubReleases(): Promise<GitHubReleaseSummary> {
   console.log('[github] Fetching GitHub releases...');
   const releases = await fetchGitHubReleases();
   console.log(`[github] Found ${releases.length} published releases`);
@@ -101,12 +115,17 @@ export async function processGitHubReleases(): Promise<ProcessResult[]> {
     const result = await processSnapshot(crawlResult, { detectedAt });
     results.push(result);
 
-    if (result.status !== 'unchanged') {
-      console.log(`[github] ${result.status}: ${result.url}`);
-    }
+    console.log(`[github] ${result.status}: ${result.url} (${release.tag_name})`);
   }
 
-  return results;
+  return {
+    totalFetched: releases.length,
+    newReleases: results.filter((r) => r.status === 'new').length,
+    modifiedReleases: results.filter((r) => r.status === 'modified').length,
+    unchangedReleases: results.filter((r) => r.status === 'unchanged').length,
+    errors: results.filter((r) => r.status === 'error').length,
+    results,
+  };
 }
 
 export async function detectUnpublishedReleases(
