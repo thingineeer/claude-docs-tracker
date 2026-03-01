@@ -395,5 +395,25 @@ export async function getThisWeekChanges(limit = 20) {
   return data ?? [];
 }
 
+export async function getPageByUrl(url: string) {
+  const { data, error } = await getSupabaseAdmin()
+    .from('pages')
+    .select('id, url, domain, section, title, sitemap_lastmod')
+    .eq('url', url)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePageLastmod(pageId: string, lastmod: string) {
+  const { error } = await getSupabaseAdmin()
+    .from('pages')
+    .update({ sitemap_lastmod: lastmod, last_crawled_at: new Date().toISOString() })
+    .eq('id', pageId);
+
+  if (error) throw error;
+}
+
 // Re-export getCategoryForPage as getCategoryFromPage for backward compatibility
 export { getCategoryForPage as getCategoryFromPage } from '@/lib/categories';

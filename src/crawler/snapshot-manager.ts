@@ -16,6 +16,15 @@ import { getTodayString } from '@/lib/timezone';
 import type { CrawlResult } from './page-crawler';
 import type { ChangeType } from '@/db/types';
 
+const MIN_CONTENT_LENGTH = 200;
+
+function isPlaceholderContent(text: string): boolean {
+  if (text.length < MIN_CONTENT_LENGTH) return true;
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  if (/^(Loading\.\.\.\s*){3,}$/.test(normalized)) return true;
+  return false;
+}
+
 const MAX_CONTENT_SIZE_BYTES = 1024 * 1024; // 1MB
 
 export function computeHash(text: string): string {
@@ -34,6 +43,12 @@ export async function processSnapshot(
   options?: { detectedAt?: string },
 ): Promise<ProcessResult> {
   try {
+    // Validate content quality — reject CSR placeholder content
+    if (isPlaceholderContent(crawlResult.contentText)) {
+      console.warn(`[snapshot] Skipping placeholder content for ${crawlResult.url}`);
+      return { url: crawlResult.url, status: 'unchanged' };
+    }
+
     const domain = getDomainFromUrl(crawlResult.url);
     const section = getSectionFromUrl(crawlResult.url);
     const category = getCategoryFromPage(domain, section);

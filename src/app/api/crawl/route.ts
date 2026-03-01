@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runPipeline } from '@/crawler/pipeline';
 import { apiError, apiInternalError } from '@/lib/api-error';
 
+export const maxDuration = 60;
+
 export async function POST(request: NextRequest) {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET;
