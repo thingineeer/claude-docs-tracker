@@ -20,11 +20,11 @@
 - Language: TypeScript (strict mode)
 - Styling: Tailwind CSS v4 (CSS custom properties 기반 다크모드)
 - DB: Supabase (PostgreSQL, Seoul 리전, ref: ngleawriplmzzpfrojde)
-- Crawler: fetch (code.claude.com SSR) + Playwright (platform.claude.com CSR)
+- Crawler: fetch (code.claude.com SSR) + sitemap lastmod (platform.claude.com CSR)
 - Diff: jsdiff
 - AI: Claude Haiku 4.5 API
 - Deploy: Vercel (GitHub 자동 배포, main push 시 프로덕션)
-- Test: Jest + ts-jest (114개 테스트, 10 suites)
+- Test: Jest + ts-jest (136개 테스트, 12 suites)
 
 ## 현재 페이지 구조 (v1.3)
 
@@ -174,13 +174,13 @@
 
 - pages: 191개 (platform 84 + code 57 + github 50)
 - changes: 16개 + GitHub releases 50건
-- 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename), 005(silent+breaking flags)
+- 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename), 005(silent+breaking flags), 006(sitemap_lastmod)
 
 ## Cron & Notification (v4.3, 2026-03-01)
 
 ### Cron 빈도 증가
-- `vercel.json`: `0 0 * * *` → `0 0,12 * * *` (하루 2회: midnight + noon UTC = 9 AM + 9 PM KST)
-- GitHub 릴리즈 감지 지연 최대 ~24시간 → ~12시간으로 단축
+- `vercel.json`: `*/30 * * * *` (30분마다)
+- `maxDuration = 60` 추가 (cron/crawl, crawl 라우트)
 
 ### 크롤링 실패 알림
 - `src/lib/notifications.ts`: `sendCrawlFailureAlert()` 추가
@@ -188,10 +188,31 @@
   - Slack: 주황(#F59E0B) 사이드바 attachment, 에러 메시지 + 타임스탬프
 - `src/app/api/cron/crawl/route.ts`: catch 블록에서 `sendCrawlFailureAlert(error)` 호출
 
+## 크롤링 아키텍처 (v4.4, 2026-03-01)
+
+### 도메인별 크롤링 전략
+- **code.claude.com (SSR, ~58페이지)**: fetch() 기반 콘텐츠 크롤링 + diff
+- **platform.claude.com (CSR, ~715페이지)**: sitemap lastmod 기반 변경 감지 (fetch 시 "Loading..." 반환되므로)
+- **GitHub releases**: API 기반 (processGitHubReleases)
+- **Anthropic news**: fetch 기반 (processAnthropicNews)
+
+### 핵심 수정 (근본 원인 해결)
+- `RATE_LIMIT_MS`: 2000ms → 500ms (58 SSR 페이지 × 0.5s = ~30s)
+- `maxDuration = 60`: cron/crawl, crawl 라우트에 추가 (Vercel 기본 10-15s → 60s)
+- 콘텐츠 검증: `isPlaceholderContent()` — 200자 미만 또는 "Loading..." 패턴 거부
+- 타임아웃 가드: GitHub(45s) + Anthropic News(45s) 둘 다 적용
+- `detectRemovedPages`: maxPages 사용 시 스킵 (false-positive 방지)
+- GitHub API 중복 호출 제거: releaseUrls를 GitHubReleaseSummary에서 재사용
+
+### DB 변경
+- `pages.sitemap_lastmod` 컬럼 추가 (006_add_sitemap_lastmod.sql)
+- `getPageByUrl()`, `updatePageLastmod()` 쿼리 추가
+
 ## 빌드 상태
 
 - TypeScript: 0 에러
-- Tests: 114/114 통과 (10 suites)
+- Tests: 136/136 통과 (12 suites)
+- Next.js build: 성공
 - 마지막 확인: 2026-03-01
 
 ## QA 수정 이력 (v1.3.1 — 2026-02-26)
