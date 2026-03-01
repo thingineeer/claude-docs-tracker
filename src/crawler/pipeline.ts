@@ -1,9 +1,9 @@
-import { fetchSitemapUrls } from './sitemap-parser';
+import { fetchSitemapUrls, getDomainFromUrl, getSectionFromUrl, type SitemapEntry } from './sitemap-parser';
 import { crawlPages } from './page-crawler';
 import { processSnapshot, type ProcessResult } from './snapshot-manager';
 import { processGitHubReleases, detectUnpublishedReleases, fetchGitHubReleases, releaseToCrawlResult, type GitHubReleaseSummary } from './github-releases-crawler';
 import { processAnthropicNews } from './anthropic-news-crawler';
-import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange } from '@/db/queries';
+import { upsertDailyReport, getDocumentationPages, getLatestSnapshotForPage, insertChange, upsertPage, getPageByUrl, updatePageLastmod, getCategoryFromPage } from '@/db/queries';
 import { sendBreakingChangeAlert, type BreakingChangeInfo } from '@/lib/notifications';
 import { getTodayString } from '@/lib/timezone';
 
@@ -43,26 +43,46 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
   console.log('[pipeline] Starting crawl pipeline...');
 
   // Step 1: Get URLs
-  let urls: string[];
+  let sitemapEntries: SitemapEntry[];
   if (customUrls) {
-    urls = customUrls;
+    sitemapEntries = customUrls.map((url) => ({ url }));
   } else {
     console.log('[pipeline] Fetching sitemap URLs...');
-    const entries = await fetchSitemapUrls();
-    urls = entries.map((e) => e.url);
+    sitemapEntries = await fetchSitemapUrls();
+  }
+
+  // When customUrls are provided, skip domain splitting (original behavior)
+  const useCustomUrls = !!customUrls;
+
+  // Split URLs by domain for different crawl strategies
+  let ssrEntries: SitemapEntry[];
+  let csrEntries: SitemapEntry[];
+
+  if (useCustomUrls) {
+    // Custom URLs: crawl everything with fetch() (original behavior)
+    ssrEntries = sitemapEntries;
+    csrEntries = [];
+  } else {
+    // Separate SSR (code.claude.com) from CSR (platform.claude.com) pages
+    ssrEntries = sitemapEntries.filter((e) => e.url.includes('code.claude.com'));
+    csrEntries = sitemapEntries.filter((e) => e.url.includes('platform.claude.com'));
   }
 
   if (maxPages) {
-    urls = urls.slice(0, maxPages);
+    // Apply limit only to SSR entries for testing
+    ssrEntries = ssrEntries.slice(0, maxPages);
   }
 
-  console.log(`[pipeline] Found ${urls.length} URLs to crawl`);
+  const totalEntries = ssrEntries.length + csrEntries.length;
+  console.log(`[pipeline] SSR pages (code.claude.com): ${ssrEntries.length}`);
+  console.log(`[pipeline] CSR pages (platform.claude.com): ${csrEntries.length} (lastmod-only)`);
 
   if (dryRun) {
     console.log('[pipeline] Dry run mode — skipping crawl');
-    urls.forEach((url) => console.log(`  - ${url}`));
+    ssrEntries.forEach((e) => console.log(`  - [SSR] ${e.url}`));
+    csrEntries.forEach((e) => console.log(`  - [CSR] ${e.url}`));
     return {
-      totalUrls: urls.length,
+      totalUrls: totalEntries,
       crawled: 0,
       newPages: 0,
       modifiedPages: 0,
@@ -76,15 +96,24 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     };
   }
 
-  // Step 2: Crawl pages
-  console.log('[pipeline] Crawling pages...');
-  const crawlResults = await crawlPages(urls, (completed, total) => {
+  // Step 2: Crawl SSR pages (code.claude.com only — fetch works for SSR)
+  console.log('[pipeline] Crawling SSR pages...');
+  const ssrUrls = ssrEntries.map((e) => e.url);
+  const crawlResults = await crawlPages(ssrUrls, (completed, total) => {
     console.log(`[pipeline] Progress: ${completed}/${total}`);
   });
 
-  console.log(`[pipeline] Crawled ${crawlResults.length} pages`);
+  console.log(`[pipeline] Crawled ${crawlResults.length} SSR pages`);
 
-  // Step 3: Process snapshots
+  // Step 2b: Check CSR pages via sitemap lastmod (platform.claude.com)
+  let csrResults: ProcessResult[] = [];
+  if (csrEntries.length > 0) {
+    console.log('[pipeline] Checking CSR pages via lastmod...');
+    csrResults = await checkLastmodChanges(csrEntries);
+    console.log(`[pipeline] CSR lastmod: ${csrResults.filter((r) => r.status !== 'unchanged').length} changes detected`);
+  }
+
+  // Step 3: Process snapshots (SSR pages only)
   console.log('[pipeline] Processing snapshots...');
   const results: ProcessResult[] = [];
 
@@ -135,19 +164,21 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
     }
   }
 
-  const allResults = [...results, ...githubResults, ...anthropicNewsResults];
+  const allResults = [...results, ...csrResults, ...githubResults, ...anthropicNewsResults];
 
   // Step 4: Detect stale (removed) pages
+  // Use all sitemap URLs (SSR + CSR) for stale detection
+  const allSitemapUrls = sitemapEntries.map((e) => e.url);
   let removedCount = 0;
   if (!customUrls) {
-    removedCount = await detectRemovedPages(urls);
+    removedCount = await detectRemovedPages(allSitemapUrls);
   }
 
   // Step 5: Generate daily report
   const elapsed = ((Date.now() - pipelineStart) / 1000).toFixed(1);
   const summary: PipelineResult = {
-    totalUrls: urls.length + githubResults.length + anthropicNewsResults.length,
-    crawled: crawlResults.length + githubResults.length + anthropicNewsResults.length,
+    totalUrls: ssrUrls.length + csrEntries.length + githubResults.length + anthropicNewsResults.length,
+    crawled: crawlResults.length + csrResults.length + githubResults.length + anthropicNewsResults.length,
     newPages: allResults.filter((r) => r.status === 'new').length,
     modifiedPages: allResults.filter((r) => r.status === 'modified').length,
     removedPages: removedCount + githubRemovedCount,
@@ -195,6 +226,85 @@ export async function runPipeline(options: PipelineOptions = {}): Promise<Pipeli
   console.log(`  New: ${summary.newPages}, Modified: ${summary.modifiedPages}, Removed: ${summary.removedPages}, Unchanged: ${summary.unchanged}, Errors: ${summary.errors}`);
 
   return summary;
+}
+
+/**
+ * Check CSR (platform.claude.com) pages for changes using sitemap lastmod dates.
+ * Since platform.claude.com is client-side rendered, fetch() returns only "Loading..."
+ * placeholder text. Instead, we detect changes by comparing sitemap lastmod values.
+ */
+async function checkLastmodChanges(entries: SitemapEntry[]): Promise<ProcessResult[]> {
+  const results: ProcessResult[] = [];
+  const today = getTodayString();
+
+  for (const entry of entries) {
+    try {
+      const existingPage = await getPageByUrl(entry.url);
+
+      if (!existingPage) {
+        // New page — record it with lastmod, no content to diff
+        const domain = getDomainFromUrl(entry.url);
+        const section = getSectionFromUrl(entry.url);
+        const category = getCategoryFromPage(domain, section);
+
+        // Extract title from URL path
+        const urlTitle = entry.url.split('/').filter(Boolean).pop() ?? 'Untitled';
+        const title = urlTitle.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+        const page = await upsertPage({
+          url: entry.url,
+          domain,
+          section,
+          title,
+          category,
+        });
+
+        if (entry.lastmod) {
+          await updatePageLastmod(page.id, entry.lastmod);
+        }
+
+        results.push({ url: entry.url, status: 'new', changeType: 'added' });
+        continue;
+      }
+
+      // Compare lastmod
+      if (entry.lastmod && existingPage.sitemap_lastmod !== entry.lastmod) {
+        console.log(`[pipeline] CSR lastmod changed: ${entry.url} (${existingPage.sitemap_lastmod} → ${entry.lastmod})`);
+
+        // Get the latest snapshot for this page (may be from initial Playwright crawl)
+        const latestSnapshot = await getLatestSnapshotForPage(existingPage.id);
+
+        if (latestSnapshot) {
+          // Record change — we know something changed but can't diff content
+          try {
+            await insertChange({
+              page_id: existingPage.id,
+              snapshot_before_id: latestSnapshot.id,
+              snapshot_after_id: latestSnapshot.id,
+              change_type: 'modified',
+              diff_html: null,
+              diff_summary: `Page content updated (detected via sitemap lastmod: ${existingPage.sitemap_lastmod ?? 'unknown'} → ${entry.lastmod})`,
+              detected_at: today,
+              is_silent: true,
+            });
+          } catch (err) {
+            // May fail on duplicate (same page + same date) — that's OK
+            console.warn(`[pipeline] Failed to insert CSR change for ${entry.url}:`, err);
+          }
+        }
+
+        await updatePageLastmod(existingPage.id, entry.lastmod);
+        results.push({ url: entry.url, status: 'modified', changeType: 'modified' });
+      } else {
+        results.push({ url: entry.url, status: 'unchanged' });
+      }
+    } catch (error) {
+      console.error(`[pipeline] CSR check failed for ${entry.url}:`, error);
+      results.push({ url: entry.url, status: 'error', error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  return results;
 }
 
 /**
