@@ -38,6 +38,79 @@ export async function sendBreakingChangeAlert(changes: BreakingChangeInfo[]): Pr
   await Promise.allSettled(promises);
 }
 
+export async function sendCrawlFailureAlert(error: unknown): Promise<void> {
+  const promises: Promise<void>[] = [];
+
+  if (process.env.WEBHOOK_DISCORD_URL) {
+    promises.push(sendDiscordCrawlFailure(error));
+  }
+  if (process.env.WEBHOOK_SLACK_URL) {
+    promises.push(sendSlackCrawlFailure(error));
+  }
+
+  await Promise.allSettled(promises);
+}
+
+async function sendDiscordCrawlFailure(error: unknown): Promise<void> {
+  const url = process.env.WEBHOOK_DISCORD_URL;
+  if (!url) return;
+
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorStack = error instanceof Error ? error.stack : undefined;
+
+  const embed = {
+    title: 'Crawl Pipeline Failed',
+    color: 0xf59e0b,
+    fields: [
+      { name: 'Error', value: errorMessage.slice(0, 1024), inline: false },
+      ...(errorStack
+        ? [{ name: 'Stack', value: `\`\`\`\n${errorStack.slice(0, 900)}\n\`\`\``, inline: false }]
+        : []),
+    ],
+    timestamp: new Date().toISOString(),
+  };
+
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ embeds: [embed] }),
+  });
+}
+
+async function sendSlackCrawlFailure(error: unknown): Promise<void> {
+  const url = process.env.WEBHOOK_SLACK_URL;
+  if (!url) return;
+
+  const errorMessage = error instanceof Error ? error.message : String(error);
+
+  const payload = {
+    attachments: [
+      {
+        color: '#F59E0B',
+        blocks: [
+          {
+            type: 'header',
+            text: { type: 'plain_text', text: 'Crawl Pipeline Failed' },
+          },
+          {
+            type: 'section',
+            fields: [
+              { type: 'mrkdwn', text: `*Error:*\n${errorMessage.slice(0, 1024)}` },
+              { type: 'mrkdwn', text: `*Time:* ${new Date().toISOString()}` },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+}
+
 async function sendDiscordNotification(result: PipelineResult): Promise<void> {
   const url = process.env.WEBHOOK_DISCORD_URL;
   if (!url) return;

@@ -176,11 +176,23 @@
 - changes: 16개 + GitHub releases 50건
 - 마이그레이션: 001(초기), 002(sidebar), 003(category), 004(category rename), 005(silent+breaking flags)
 
+## Cron & Notification (v4.3, 2026-03-01)
+
+### Cron 빈도 증가
+- `vercel.json`: `0 0 * * *` → `0 0,12 * * *` (하루 2회: midnight + noon UTC = 9 AM + 9 PM KST)
+- GitHub 릴리즈 감지 지연 최대 ~24시간 → ~12시간으로 단축
+
+### 크롤링 실패 알림
+- `src/lib/notifications.ts`: `sendCrawlFailureAlert()` 추가
+  - Discord: 주황(#F59E0B) embed, 에러 메시지 + 스택 트레이스
+  - Slack: 주황(#F59E0B) 사이드바 attachment, 에러 메시지 + 타임스탬프
+- `src/app/api/cron/crawl/route.ts`: catch 블록에서 `sendCrawlFailureAlert(error)` 호출
+
 ## 빌드 상태
 
 - TypeScript: 0 에러
 - Tests: 114/114 통과 (10 suites)
-- 마지막 확인: 2026-02-27
+- 마지막 확인: 2026-03-01
 
 ## QA 수정 이력 (v1.3.1 — 2026-02-26)
 

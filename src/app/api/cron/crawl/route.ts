@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { runPipeline } from '@/crawler/pipeline';
 import { generateDailySummary } from '@/lib/ai-summary';
-import { sendNotifications } from '@/lib/notifications';
+import { sendNotifications, sendCrawlFailureAlert } from '@/lib/notifications';
 import { apiError, apiInternalError } from '@/lib/api-error';
 
 export async function GET(request: NextRequest) {
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
+    await sendCrawlFailureAlert(error).catch(console.error);
     return apiInternalError(error);
   }
 }
